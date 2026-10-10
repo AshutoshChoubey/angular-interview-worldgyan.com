@@ -1,25 +1,23 @@
 # Angular Interview & Study Guide — worldgyan.com
 
-Welcome to the **Angular Signals & Modern Reactivity Interview Guide**, curated for developers preparing for Senior and Lead Angular developer interviews.
+Welcome to the **Angular Interview & Deep Dive Study Guide**, curated for frontend developers preparing for Senior and Lead Angular developer interviews.
+
+This repository is organized into **modular topic folders**. Each topic has its own dedicated directory containing in-depth concept breakdowns, interview Q&A, and practical TypeScript/Angular code examples.
 
 ---
 
-## 📚 Contents
+## 🗂️ Topics & Modules
 
-### 1. 📖 Comprehensive Study Guides
-- [**Angular Signals Interview Guide**](docs/angular-signals-interview-guide.md): In-depth guide covering fundamentals, push-pull reactivity, diamond problem, `computed`, `effect`, `untracked`, custom equality, Zoneless change detection, and top interview questions & answers.
+### 1. 📡 [Angular Signals (`signals/`)](signals/README.md)
+The modern reactivity model in Angular 16, 17, 18, and 19+.
 
----
-
-### 2. 💻 Practical Code Examples
-
-| File | Description | Key APIs |
-| :--- | :--- | :--- |
-| [`examples/signals-basics.ts`](examples/signals-basics.ts) | Writable signals, immutable updates | `signal()`, `set()`, `update()` |
-| [`examples/computed-and-dynamic-deps.ts`](examples/computed-and-dynamic-deps.ts) | Computed values, dynamic dependency tracking, memoization | `computed()`, `untracked()`, `equal` |
-| [`examples/effects-and-cleanup.ts`](examples/effects-and-cleanup.ts) | Side effects, injection contexts, teardown | `effect()`, `onCleanup()`, `runInInjectionContext` |
-| [`examples/signal-component-apis.ts`](examples/signal-component-apis.ts) | Signal component primitives | `input()`, `output()`, `model()`, `viewChild()` |
-| [`examples/rxjs-signal-interop.ts`](examples/rxjs-signal-interop.ts) | RxJS & Signals interoperability | `toSignal()`, `toObservable()` |
+- 📖 **Study Guide**: [`signals/README.md`](signals/README.md) (or [`signals/angular-signals-interview-guide.md`](signals/angular-signals-interview-guide.md))
+- 💻 **Practical Examples**:
+  - [`signals/examples/signals-basics.ts`](signals/examples/signals-basics.ts) — Writable signals (`signal()`, `.set()`, `.update()`) & immutability.
+  - [`signals/examples/computed-and-dynamic-deps.ts`](signals/examples/computed-and-dynamic-deps.ts) — `computed()`, dynamic dependency tracking, memoization, `untracked()`, custom equality.
+  - [`signals/examples/effects-and-cleanup.ts`](signals/examples/effects-and-cleanup.ts) — `effect()`, injection contexts, `onCleanup()`, and external API sync.
+  - [`signals/examples/signal-component-apis.ts`](signals/examples/signal-component-apis.ts) — `input()`, `output()`, `model()`, and `viewChild()`.
+  - [`signals/examples/rxjs-signal-interop.ts`](signals/examples/rxjs-signal-interop.ts) — `toSignal()` & `toObservable()` interop patterns.
 
 ---
 
@@ -32,14 +30,14 @@ import { signal, computed, effect } from '@angular/core';
 const count = signal(0);
 count.set(5);                   // Replaces value
 count.update(n => n + 1);       // Updates based on previous value
-console.log(count());           // Reads value (getter)
+console.log(count());           // Reads value (getter function)
 
 // Computed Signal (Lazy & Memoized)
 const double = computed(() => count() * 2);
 
 // Side Effect (Runs in Injection Context)
 effect(() => {
-  console.log(`Count is now: ${count()}`);
+  console.log(`Count changed to: ${count()}`);
 });
 ```
 
@@ -57,10 +55,10 @@ effect(() => {
 
 ---
 
-## 🚀 Future Roadmap & Topics
-- [x] Angular Signals Deep Dive
-- [ ] Angular Zoneless Architecture (`provideExperimentalZonelessChangeDetection`)
-- [ ] Control Flow Syntax (`@if`, `@for`, `@switch`, `@defer`)
-- [ ] Dependency Injection (`inject()`, hierarchical injectors)
-- [ ] Angular SSR & Hydration (Event replay, incremental hydration)
-- [ ] Angular Performance Optimization & Change Detection (`OnPush`)
+## 🚀 Repository Topic Roadmap
+- [x] 📡 **Signals** (`signals/`)
+- [ ] ⚡ **Zoneless Angular** (`zoneless/`)
+- [ ] 🔀 **Modern Control Flow** (`control-flow/` - `@if`, `@for`, `@defer`)
+- [ ] 💉 **Dependency Injection** (`dependency-injection/` - `inject()`, hierarchical injectors)
+- [ ] 🌐 **SSR & Hydration** (`ssr-hydration/` - Event replay, incremental hydration)
+- [ ] 🏎️ **Performance & Change Detection** (`performance/` - `OnPush`, detaching change detector)

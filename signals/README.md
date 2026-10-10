@@ -6,6 +6,15 @@
 
 ---
 
+## 💻 Practical Code Examples in this Topic
+- [`examples/signals-basics.ts`](examples/signals-basics.ts) — Writable signals, `.set()`, `.update()`, immutability
+- [`examples/computed-and-dynamic-deps.ts`](examples/computed-and-dynamic-deps.ts) — `computed()`, dynamic dependencies, `untracked()`, equality functions
+- [`examples/effects-and-cleanup.ts`](examples/effects-and-cleanup.ts) — `effect()`, `onCleanup()`, injection context
+- [`examples/signal-component-apis.ts`](examples/signal-component-apis.ts) — `input()`, `output()`, `model()`, `viewChild()`
+- [`examples/rxjs-signal-interop.ts`](examples/rxjs-signal-interop.ts) — `toSignal()`, `toObservable()`, async pipe replacement
+
+---
+
 ## Table of Contents
 1. [Core Fundamentals](#1-core-fundamentals)
 2. [Writable Signals (`signal`)](#2-writable-signals)
