@@ -18,6 +18,7 @@ The modern reactivity model in Angular 16, 17, 18, and 19+.
   - [`signals/examples/effects-and-cleanup.ts`](signals/examples/effects-and-cleanup.ts) — `effect()`, injection contexts, `onCleanup()`, and external API sync.
   - [`signals/examples/signal-component-apis.ts`](signals/examples/signal-component-apis.ts) — `input()`, `output()`, `model()`, and `viewChild()`.
   - [`signals/examples/rxjs-signal-interop.ts`](signals/examples/rxjs-signal-interop.ts) — `toSignal()` & `toObservable()` interop patterns.
+  - [`signals/examples/change-detection-and-zoneless.ts`](signals/examples/change-detection-and-zoneless.ts) — `OnPush` with Signals & Zoneless bootstrap.
 
 ---
 
