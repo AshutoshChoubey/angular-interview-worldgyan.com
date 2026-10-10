@@ -120,11 +120,11 @@ The **Diamond Dependency Problem** is a foundational concept tested in Senior & 
 Suppose Signal `A` derives `B` and `C`, and `D` is computed from both `B` and `C`:
 
 ```mermaid
-graph TD
-    A["Signal A"] -->|derives| B["Signal B"]
-    A -->|derives| C["Signal C"]
-    B -->|derives| D["Signal D"]
-    C -->|derives| D
+flowchart TD
+    A["Signal A"] --> B["Signal B"]
+    A --> C["Signal C"]
+    B --> D["Signal D"]
+    C --> D
 ```
 
 ### Concrete Code Scenario
@@ -154,7 +154,7 @@ sequenceDiagram
     A->>B: 1. Push new value (a = 2)
     Note over B: B recomputes: 2 * 2 = 4
     B->>D: 2. B notifies D immediately
-    Note over D: ⚠️ GLITCH! D reads new B(4) + old C(3) = 7
+    Note over D: GLITCH: D reads new B(4) + old C(3) = 7
     A->>C: 3. Push new value (a = 2)
     Note over C: C recomputes: 2 * 3 = 6
     C->>D: 4. C notifies D
@@ -172,19 +172,20 @@ sequenceDiagram
 Angular decouples **notification** from **recomputation**:
 
 ```mermaid
-graph TD
-    subgraph Phase 1: Push (Mark Dirty)
-        A1["a.set(2)"] -->|Mark DIRTY| B1["B marked DIRTY"]
-        A1 -->|Mark DIRTY| C1["C marked DIRTY"]
-        B1 -->|Mark DIRTY| D1["D marked DIRTY"]
-        C1 -->|Mark DIRTY| D1
+flowchart TD
+    subgraph Phase1 ["Phase 1: Push (Mark Dirty)"]
+        A1["a.set(2)"] --> B1["B marked DIRTY"]
+        A1 --> C1["C marked DIRTY"]
+        B1 --> D1["D marked DIRTY"]
+        C1 --> D1
     end
 
-    subgraph Phase 2: Pull (Topological Evaluation)
+    subgraph Phase2 ["Phase 2: Pull (Topological Evaluation)"]
         ReadD["Consumer reads d()"] --> CheckDeps["D requests dependencies"]
-        CheckDeps --> EvalB["Recompute B -> 4"]
-        CheckDeps --> EvalC["Recompute C -> 6"]
-        EvalB & EvalC --> EvalD["Compute D: 4 + 6 = 10 (Evaluated ONCE)"]
+        CheckDeps --> EvalB["Recompute B to 4"]
+        CheckDeps --> EvalC["Recompute C to 6"]
+        EvalB --> EvalD["Compute D: 4 + 6 = 10 (Evaluated ONCE)"]
+        EvalC --> EvalD
     end
 ```
 
@@ -380,12 +381,12 @@ sequenceDiagram
 
     C->>TS: toSignal(source$)
     TS->>DR: Register with DestroyRef
-    TS->>OBS: .subscribe()
-    OBS-->>SIG: Emits value -> signal.set(val)
+    TS->>OBS: subscribe()
+    OBS-->>SIG: Emits value: signal.set(val)
     Note over C: Component actively renders signal()
     Note over C: Component is destroyed
     DR->>TS: Trigger onDestroy callback
-    TS->>OBS: .unsubscribe()
+    TS->>OBS: unsubscribe()
     Note over TS: Memory leak prevented automatically!
 ```
 
@@ -428,18 +429,18 @@ Historically, working with `OnPush` required boilerplate: developers had to pipe
 **With Signals, `OnPush` works automatically without boilerplate:**
 
 ```mermaid
-graph TD
-    subgraph Traditional OnPush
+flowchart TD
+    subgraph Trad ["Traditional OnPush"]
         Event1["External Event / Async Timer"] --> Mod1["Modify traditional variable"]
         Mod1 --> Forgotten["Forgot cdr.markForCheck()"]
-        Forgotten --> NoUpdate["❌ UI DOES NOT UPDATE!"]
+        Forgotten --> NoUpdate["UI DOES NOT UPDATE!"]
     end
 
-    subgraph Signals with OnPush
+    subgraph SigPush ["Signals with OnPush"]
         Event2["External Event / Async Timer"] --> Mod2["mySignal.set(newValue)"]
         Mod2 --> AutoMark["Signal notifies ReactiveLViewConsumer"]
         AutoMark --> InternalMark["Angular internally calls consumerMarkDirty(view)"]
-        InternalMark --> UIUpdate["✅ UI UPDATES AUTOMATICALLY!"]
+        InternalMark --> UIUpdate["UI UPDATES AUTOMATICALLY!"]
     end
 ```
 
@@ -454,8 +455,8 @@ graph TD
 ### Visual Comparison of Change Detection Passes
 
 ```mermaid
-graph TD
-    subgraph Strategy 1: Default Strategy
+flowchart TD
+    subgraph Strat1 ["Strategy 1: Default Strategy"]
         D_Root["Root Component (Checked)"] --> D_A["Component A (Checked)"]
         D_Root --> D_B["Component B (Checked)"]
         D_A --> D_A1["Component A1 (Checked)"]
@@ -464,13 +465,13 @@ graph TD
         Note1["Every single component checked on EVERY event!"]
     end
 
-    subgraph Strategy 2: Signal + OnPush
+    subgraph Strat2 ["Strategy 2: Signal with OnPush"]
         S_Root["Root (Skipped)"] --> S_A["Component A (Skipped)"]
         S_Root --> S_B["Component B (Path traversed)"]
         S_A --> S_A1["Component A1 (Skipped)"]
         S_A --> S_A2["Component A2 (Skipped)"]
-        S_B --> S_B1["Component B1 (Signal Dirty -> CHECKED)"]
-        Note2["Only the direct path to the dirty Signal component is checked!"]
+        S_B --> S_B1["Component B1 (Signal Dirty: CHECKED)"]
+        Note2["Only direct path to dirty Signal component is checked!"]
     end
 ```
 
@@ -511,15 +512,15 @@ export const appConfig: ApplicationConfig = {
 ### The Zoneless Architecture Comparison
 
 ```mermaid
-graph TD
-    subgraph Zone.js Architecture (Legacy)
+flowchart TD
+    subgraph ZoneArch ["Zone.js Architecture (Legacy)"]
         AsyncEvent["User click / setTimeout / HTTP"] --> ZoneIntercept["Zone.js intercepts async callback"]
         ZoneIntercept --> ZoneNotify["Zone onMicrotaskEmpty fires"]
         ZoneNotify --> AppTick["ApplicationRef.tick() runs"]
         AppTick --> TopDown["Checks Entire Component Tree (Top-to-Bottom)"]
     end
 
-    subgraph Zoneless Signal Architecture (Modern)
+    subgraph ZonelessArch ["Zoneless Signal Architecture (Modern)"]
         SigChange["mySignal.set(val)"] --> DirectNotify["Directly marks reactive view DIRTY"]
         DirectNotify --> Scheduler["Angular Scheduler queues microtask"]
         Scheduler --> TargetRender["Renders ONLY the dirty views directly!"]
