@@ -16,7 +16,52 @@
 
 ---
 
+## ⚡ Rapid-Fire Interview Summary (60-Second Cheat Sheet)
+
+A concise, high-impact overview covering exactly what interviewers test about Angular Signals:
+
+| Concept | Syntax / API | Core Interview Answer (What to say) |
+| :--- | :--- | :--- |
+| **Declaration & Read** | `count = signal(0)`<br>`count()` | Creates a reactive wrapper with an initial value. **Always invoke with parentheses `()`** as a getter function to read the value in templates or TypeScript code. |
+| **`set()` vs `update()`** | `count.set(10)`<br>`count.update(c => c + 1)` | • **`set()`**: Replaces the value directly without needing the previous state (e.g. reset button or API response).<br>• **`update()`**: Calculates the new value based on the current value via a callback function `(prev => next)`. |
+| **Immutability Pattern** | `user.update(u => ({ ...u, name: 'Ash' }))` | Signals use strict reference equality (`===`). **Never mutate objects or arrays in-place** (e.g. `user().name = 'Ash'` or `items().push(x)`) because the reference remains identical, so Angular won't trigger re-renders. Always return a new reference using the spread operator (`...`). |
+| **Computed Signal** | `double = computed(() => count() * 2)` | Derives a **read-only** signal from other signals. It is **lazy** (evaluated only when read) and **memoized** (cached until dependencies change). Cannot be written to directly. |
+| **Effect** | `effect(() => console.log(count()))` | Runs a side-effect whenever dependent signals change. Runs asynchronously as a microtask inside an **Injection Context** (constructor). |
+| **When to use `effect()`** | • Console logging / debugging<br>• `localStorage` / `sessionStorage`<br>• `document.title` tab title<br>• 3rd-party libs (Charts/Canvas/Maps) | Use strictly for side-effects outside Angular's view state.<br>**Rule: Never update another signal inside an `effect()`** (always use `computed()` for state derivation). |
+| **Parent $\to$ Child Input** | `theme = input('light')`<br>`id = input.required<string>()` | Signal-based replacement for `@Input()`. Use `input()` for optional inputs with default fallback, and `input.required()` when the parent **must** provide the value (catches missing inputs at compile-time). |
+| **Child $\to$ Parent Output** | `saved = output<string>()`<br>`this.saved.emit('done')` | Modern replacement for `@Output() emitter = new EventEmitter()`. Emits events cleanly to parent templates with `.emit()`. |
+| **Two-Way Binding** | `count = model(0)` | Creates a writable signal supporting two-way banana-in-a-box syntax `[(count)]="parentCount"`. |
+
+---
+
+### 🎯 Key Interview Questions & Quick Answers
+
+#### Q: What is the exact difference between `set()` and `update()`?
+> **Answer**: `set(newValue)` unconditionally overwrites the signal value without inspecting the previous value. `update(current => next)` computes the next value based on the current value via a pure function. Both trigger notifications if the new value is different (`!==`).
+
+#### Q: How do you handle immutability with Objects and Arrays in Signals?
+> **Answer**: Because Signals use reference equality (`===`) by default, mutating an object in-place (like `items().push(x)` or `user().role = 'Admin'`) retains the same reference. As a result, Angular **will not** trigger template re-rendering. You must always return a new reference:
+> ```typescript
+> // Arrays
+> items.update(list => [...list, newItem]);
+>
+> // Objects
+> user.update(u => ({ ...u, role: 'Admin' }));
+> ```
+
+#### Q: When should you use `effect()` vs `computed()`?
+> **Answer**:
+> - Use **`computed()`** whenever you are deriving new **state** for the UI or application (lazy, memoized, glitch-free).
+> - Use **`effect()`** only for **side-effects** interacting with outside systems: writing to `localStorage`, logging to console, updating browser tab `document.title`, or syncing with non-Angular DOM/canvas libraries.
+> - **Golden Rule**: Never use `effect()` to propagate state to other signals (writing to signals in effects is disabled by default to prevent infinite cycles).
+
+#### Q: When should you use `input()` vs `input.required()`?
+> **Answer**: Use `input(defaultValue)` when the property is optional and has a sensible default. Use `input.required<Type>()` when the component cannot function without the input (e.g. `userId` in a user card); TypeScript will give a compile-time error if the parent omits it.
+
+---
+
 ## Table of Contents
+0. [⚡ Rapid-Fire Interview Summary (60-Second Cheat Sheet)](#-rapid-fire-interview-summary-60-second-cheat-sheet)
 1. [Core Fundamentals](#1-core-fundamentals)
 2. [Writable Signals (`signal`)](#2-writable-signals)
 3. [Computed Signals (`computed`)](#3-computed-signals)
@@ -224,9 +269,10 @@ export class CounterComponent {
 ```
 
 ### When to Use `effect()`:
-- Logging / Analytics
-- Syncing state with external non-Angular APIs (e.g., `localStorage`, WebSockets, `<canvas>`)
-- Custom DOM measurements or manipulation
+- **Console Logging & Debugging**: Tracking signal updates over time (`console.log('Count:', this.count())`).
+- **Storage Persistence**: Syncing state with `localStorage` or `sessionStorage` (`localStorage.setItem('theme', this.theme())`).
+- **Document / Browser Metadata**: Updating browser tab `document.title` or meta tags dynamically.
+- **Third-Party Non-Angular Libraries**: Syncing signal state with external DOM libraries (e.g. D3 charts, Leaflet maps, audio/video players, `<canvas>`).
 
 ### When NOT to Use `effect()`:
 - **Never propagate state to other signals using effects!** Use `computed()` instead.

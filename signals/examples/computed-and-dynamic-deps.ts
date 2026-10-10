@@ -30,13 +30,15 @@ export const greeting = computed(() => {
 
 // 3. Using untracked()
 export const pageTitle = signal('Dashboard');
-export const analyticsTrackingEnabled = signal(true);
+export const debugLoggingEnabled = signal(true);
 
 export const headerTitle = computed(() => {
   const title = pageTitle();
-  // Read analyticsTrackingEnabled without making headerTitle depend on it
-  const isTracking = untracked(() => analyticsTrackingEnabled());
-  console.log(`[Computed] Render header: ${title}, Tracking: ${isTracking}`);
+  // Read debugLoggingEnabled without making headerTitle depend on it
+  const isDebug = untracked(() => debugLoggingEnabled());
+  if (isDebug) {
+    console.log(`[Computed] Render header: ${title}`);
+  }
   return title;
 });
 
