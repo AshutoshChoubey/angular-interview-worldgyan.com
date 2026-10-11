@@ -1,7 +1,7 @@
 # Angular Signals — Comprehensive Interview Preparation Guide
 
 > **Author**: worldgyan.com / Ashutosh Choubey  
-> **Topic**: Angular Signals & Modern Reactivity (Angular 16, 17, 18, 19+)  
+> **Topic**: Angular Signals & Modern Reactivity (Angular 16 – 22+ Stable)  
 > **Target Audience**: Frontend Engineers, Senior Angular Developers, Technical Leads & Architects  
 
 ---
@@ -13,12 +13,13 @@
 - [`examples/signal-component-apis.ts`](examples/signal-component-apis.ts) — `input()`, `output()`, `model()`, `viewChild()`
 - [`examples/rxjs-signal-interop.ts`](examples/rxjs-signal-interop.ts) — `toSignal()`, `toObservable()`, async pipe replacement
 - [`examples/change-detection-and-zoneless.ts`](examples/change-detection-and-zoneless.ts) — `ChangeDetectionStrategy.OnPush` with Signals & Zoneless bootstrap
+- [`examples/linked-signal-and-resource.ts`](examples/linked-signal-and-resource.ts) — `linkedSignal()` & `resource()` / `rxResource()` (Angular 22 Stable)
 
 ---
 
 ## ⚡ Rapid-Fire Interview Summary (60-Second Cheat Sheet)
 
-A concise, high-impact overview covering exactly what interviewers test about Angular Signals:
+A concise, high-impact overview covering exactly what interviewers test about Angular Signals (up to Angular 22):
 
 | Concept | Syntax / API | Core Interview Answer (What to say) |
 | :--- | :--- | :--- |
@@ -26,36 +27,45 @@ A concise, high-impact overview covering exactly what interviewers test about An
 | **`set()` vs `update()`** | `count.set(10)`<br>`count.update(c => c + 1)` | • **`set()`**: Replaces the value directly without needing the previous state (e.g. reset button or API response).<br>• **`update()`**: Calculates the new value based on the current value via a callback function `(prev => next)`. |
 | **Immutability Pattern** | `user.update(u => ({ ...u, name: 'Ash' }))` | Signals use strict reference equality (`===`). **Never mutate objects or arrays in-place** (e.g. `user().name = 'Ash'` or `items().push(x)`) because the reference remains identical, so Angular won't trigger re-renders. Always return a new reference using the spread operator (`...`). |
 | **Computed Signal** | `double = computed(() => count() * 2)` | Derives a **read-only** signal from other signals. It is **lazy** (evaluated only when read) and **memoized** (cached until dependencies change). Cannot be written to directly. |
+| **`linkedSignal()` (v19-v22)** | `opt = linkedSignal(() => getOptions(country()))` | **Dependent Writable Signal**. Automatically resets/recomputes when its source signal changes, but unlike `computed()`, it is **writable** (`.set()`, `.update()`). Solves the "reset/override state" problem. |
+| **`resource()` (v19-v22)** | `userRes = resource({ request, loader })` | **Declarative Async Data Fetching**. Directly binds an input signal to an async Promise or HTTP call. Provides reactive signals `.value()`, `.isLoading()`, `.status()`, and `.error()`. Automatically cancels in-flight requests. |
 | **Effect** | `effect(() => console.log(count()))` | Runs a side-effect whenever dependent signals change. Runs asynchronously as a microtask inside an **Injection Context** (constructor). |
-| **When to use `effect()`** | • Console logging / debugging<br>• `localStorage` / `sessionStorage`<br>• `document.title` tab title<br>• 3rd-party libs (Charts/Canvas/Maps) | Use strictly for side-effects outside Angular's view state.<br>**Rule: Never update another signal inside an `effect()`** (always use `computed()` for state derivation). |
+| **When to use `effect()`** | • Console logging / debugging<br>• `localStorage` / `sessionStorage`<br>• `document.title` tab title<br>• 3rd-party libs (Charts/Canvas/Maps) | Use strictly for side-effects outside Angular's view state.<br>**Rule: Never update another signal inside an `effect()`** (use `linkedSignal()` or `computed()` instead). |
 | **Parent $\to$ Child Input** | `theme = input('light')`<br>`id = input.required<string>()` | Signal-based replacement for `@Input()`. Use `input()` for optional inputs with default fallback, and `input.required()` when the parent **must** provide the value (catches missing inputs at compile-time). |
 | **Child $\to$ Parent Output** | `saved = output<string>()`<br>`this.saved.emit('done')` | Modern replacement for `@Output() emitter = new EventEmitter()`. Emits events cleanly to parent templates with `.emit()`. |
 | **Two-Way Binding** | `count = model(0)` | Creates a writable signal supporting two-way banana-in-a-box syntax `[(count)]="parentCount"`. |
+| **Zoneless Angular (v20-v22)** | `provideZonelessChangeDetection()` | Removes `zone.js` and monkey-patching. Signals schedule view rendering directly via microtasks. **Default in Angular 21/22+**. |
 
 ---
 
 ### 🎯 Key Interview Questions & Quick Answers
 
-#### Q: What is the exact difference between `set()` and `update()`?
+#### Q1: What is the exact difference between `set()` and `update()`?
 > **Answer**: `set(newValue)` unconditionally overwrites the signal value without inspecting the previous value. `update(current => next)` computes the next value based on the current value via a pure function. Both trigger notifications if the new value is different (`!==`).
 
-#### Q: How do you handle immutability with Objects and Arrays in Signals?
+#### Q2: How do you handle immutability with Objects and Arrays in Signals?
 > **Answer**: Because Signals use reference equality (`===`) by default, mutating an object in-place (like `items().push(x)` or `user().role = 'Admin'`) retains the same reference. As a result, Angular **will not** trigger template re-rendering. You must always return a new reference:
 > ```typescript
-> // Arrays
+> // Arrays: return a new array
 > items.update(list => [...list, newItem]);
 >
-> // Objects
+> // Objects: return a new object with spread operator
 > user.update(u => ({ ...u, role: 'Admin' }));
 > ```
 
-#### Q: When should you use `effect()` vs `computed()`?
+#### Q3: What is `linkedSignal()` (introduced in v19, stable in v22) and what problem does it solve?
+> **Answer**: In older Angular versions, if you had a writable state that depended on another signal (e.g., a dropdown whose selection resets when a country changes, but can also be manually chosen by the user), you had to awkwardly use an `effect()` with `allowSignalWrites: true` or manual synchronization. `linkedSignal()` solves this by creating a **writable signal that automatically re-evaluates and resets when its source signal changes**, while still permitting `.set()` and `.update()`.
+
+#### Q4: How does the `resource()` / `rxResource()` API replace manual data fetching?
+> **Answer**: Instead of managing `toSignal()`, manual subscriptions, `loading = true/false` flags, error try/catches, and `switchMap` cancellation manually, `resource()` declaratively connects an input signal to an asynchronous loader. It automatically exposes `.value()`, `.isLoading()`, `.status()`, and `.error()` signals, and automatically cancels stale in-flight requests.
+
+#### Q5: When should you use `effect()` vs `computed()`?
 > **Answer**:
 > - Use **`computed()`** whenever you are deriving new **state** for the UI or application (lazy, memoized, glitch-free).
 > - Use **`effect()`** only for **side-effects** interacting with outside systems: writing to `localStorage`, logging to console, updating browser tab `document.title`, or syncing with non-Angular DOM/canvas libraries.
-> - **Golden Rule**: Never use `effect()` to propagate state to other signals (writing to signals in effects is disabled by default to prevent infinite cycles).
+> - **Golden Rule**: Never use `effect()` to propagate state to other signals (use `computed()` or `linkedSignal()` instead).
 
-#### Q: When should you use `input()` vs `input.required()`?
+#### Q6: When should you use `input()` vs `input.required()`?
 > **Answer**: Use `input(defaultValue)` when the property is optional and has a sensible default. Use `input.required<Type>()` when the component cannot function without the input (e.g. `userId` in a user card); TypeScript will give a compile-time error if the parent omits it.
 
 ---
@@ -72,9 +82,10 @@ A concise, high-impact overview covering exactly what interviewers test about An
 8. [Signals vs RxJS Observables & `toSignal` Lifecycle](#8-signals-vs-rxjs-observables--tosignal-lifecycle)
 9. [Change Detection Strategies (`Default` vs `OnPush`) & Signals](#9-change-detection-strategies-default-vs-onpush--signals)
 10. [Zoneless Angular (Operating Without `zone.js`)](#10-zoneless-angular-operating-without-zonejs)
-11. [Disadvantages & Limitations of Angular Signals](#11-disadvantages--limitations-of-angular-signals)
-12. [Common Pitfalls & Anti-Patterns](#12-common-pitfalls--anti-patterns)
-13. [High-Frequency Interview Questions (Q&A)](#13-high-frequency-interview-questions)
+11. [Modern Reactivity in Angular 19 – 22: `linkedSignal` & `resource`](#11-modern-reactivity-in-angular-19--22-linkedsignal--resource)
+12. [Disadvantages & Limitations of Angular Signals](#12-disadvantages--limitations-of-angular-signals)
+13. [Common Pitfalls & Anti-Patterns](#13-common-pitfalls--anti-patterns)
+14. [High-Frequency Interview Questions (Q&A)](#14-high-frequency-interview-questions)
 
 ---
 
@@ -542,18 +553,21 @@ Whenever any asynchronous operation finished, `zone.js` emitted `onMicrotaskEmpt
 
 ### How Signals Enable Zoneless Change Detection
 
-In Angular 18+, you can completely remove `zone.js` by providing:
+In modern Angular (graduated to **stable in Angular 20.2+** and **enabled by default in Angular 21/22+**), `zone.js` is completely removed:
 
 ```typescript
-// app.config.ts
-import { ApplicationConfig, provideExperimentalZonelessChangeDetection } from '@angular/core';
+// app.config.ts (Angular 20.2 – 22+)
+import { ApplicationConfig, provideZonelessChangeDetection } from '@angular/core';
 
 export const appConfig: ApplicationConfig = {
   providers: [
-    provideExperimentalZonelessChangeDetection()
+    // Stable in Angular 20.2+, default in Angular 21/22+
+    provideZonelessChangeDetection()
   ]
 };
 ```
+
+> **Backwards Compatibility**: If an existing application has legacy third-party libraries that still require Zone.js monkey-patching, you can explicitly opt into Zone.js using `provideZoneChangeDetection()`.
 
 ### The Zoneless Architecture Comparison
 
@@ -582,7 +596,105 @@ Without `zone.js`, Angular relies on explicit notifications:
 
 ---
 
-## 11. Disadvantages & Limitations of Angular Signals
+## 11. Modern Reactivity in Angular 19 – 22: `linkedSignal` & `resource`
+
+Angular 19 introduced two revolutionary reactive primitives that graduated to **full stable status in Angular 22**:
+
+### 1. `linkedSignal()` — The Dependent Writable Signal
+Historically, if a signal depended on another signal, developers had to choose between:
+- `computed()`: **Read-only** (cannot be edited or overwritten).
+- `effect()` with a writable signal: Prone to **glitches, race conditions, and infinite loop warnings**.
+
+`linkedSignal()` solves this by creating a **writable signal that automatically resets or recomputes when its source signal changes**:
+
+```typescript
+import { signal, linkedSignal } from '@angular/core';
+
+const country = signal<'US' | 'IN'>('US');
+
+// Automatically resets to standard shipping when country changes,
+// BUT users can still manually override it via .set()!
+const shipping = linkedSignal<string>(() => {
+  return country() === 'US' ? 'US-Standard ($5)' : 'Speed-Post ($2)';
+});
+
+console.log(shipping()); // "US-Standard ($5)"
+
+// User manually selects express shipping
+shipping.set('US-Overnight ($20)');
+console.log(shipping()); // "US-Overnight ($20)" (Manual override works!)
+
+// When country changes, linkedSignal resets to the new country default!
+country.set('IN');
+console.log(shipping()); // "Speed-Post ($2)" (Automatically reset!)
+```
+
+#### Angular 22.1 Update: Custom `set` Logic
+In Angular 22.1, `linkedSignal` supports a custom `set` handler, allowing you to intercept writes (e.g. syncing with an external service or parent object):
+```typescript
+const count = linkedSignal({
+  source: () => this.baseCount(),
+  computation: (base) => base * 2,
+  set: (newValue) => {
+    console.log('Custom write intercepted:', newValue);
+    return newValue;
+  }
+});
+```
+
+---
+
+### 2. `resource()` & `rxResource()` — Declarative Async Data Fetching
+In older Angular apps, fetching async data with signals required combining `HttpClient`, `toSignal()`, manual boolean `isLoading` flags, error `catchError` handlers, and `switchMap` cancellation.
+
+The `resource()` API provides **built-in declarative async data fetching**:
+
+```typescript
+import { Component, signal, resource } from '@angular/core';
+
+@Component({ ... })
+export class UserProfileComponent {
+  userId = signal<number>(1);
+
+  // Declaratively binds the userId signal to an async fetch operation
+  userResource = resource({
+    request: () => ({ id: this.userId() }),
+    loader: async ({ request, abortSignal }) => {
+      const res = await fetch(`/api/users/${request.id}`, { signal: abortSignal });
+      return await res.json();
+    }
+  });
+
+  // Built-in reactive signals provided out of the box:
+  // userResource.value()     -> The resolved data
+  // userResource.isLoading() -> boolean flag
+  // userResource.status()    -> 'idle' | 'loading' | 'reloading' | 'resolved' | 'error'
+  // userResource.error()     -> error object if failed
+}
+```
+
+#### Key Capabilities:
+- **Automatic Cancellation**: If `userId` changes while a request is in flight, the previous request is automatically aborted via `AbortSignal`.
+- **Local Optimistic Updates**: The resource reference is writable! You can call `userResource.update(user => ({ ...user, name: 'New' }))` to apply instant optimistic UI updates without refetching from the server.
+- **`rxResource()` Variant**: Works seamlessly with RxJS `Observable` streams for teams using `HttpClient`.
+
+---
+
+### 🚀 Angular Signals Evolution Matrix (Angular 16 – 22)
+
+| Version | Status & Major Changes |
+| :--- | :--- |
+| **Angular 16** | Initial Developer Preview of Signals (`signal`, `computed`, `effect`). |
+| **Angular 17** | **Signals Stable Core**: `signal()`, `computed()`, and `effect()` stabilized. `.mutate()` removed for immutability. Introduced Signal Component APIs (`input()`, `output()`, `model()`, `viewChild()`). |
+| **Angular 18** | Introduced `provideExperimentalZonelessChangeDetection()`. Signal Queries stabilized. |
+| **Angular 19** | Introduced `linkedSignal()` and `resource()` / `rxResource()` as developer preview. |
+| **Angular 20** | `provideZonelessChangeDetection()` graduated to **stable** in v20.2. |
+| **Angular 21** | **Zoneless Enabled by Default** for all newly scaffolded applications. |
+| **Angular 22** | **Full Ecosystem Stability**: `linkedSignal()`, `resource()`, `rxResource()`, and `Signal Forms` graduated to fully stable production APIs. Added custom `set` support in `linkedSignal` (v22.1). |
+
+---
+
+## 12. Disadvantages & Limitations of Angular Signals
 
 While Signals provide massive performance gains, a senior developer must understand their limitations:
 
@@ -597,7 +709,7 @@ While Signals provide massive performance gains, a senior developer must underst
 
 ---
 
-## 12. Common Pitfalls & Anti-Patterns
+## 13. Common Pitfalls & Anti-Patterns
 
 1. **Mutating state in place without creating new references**:
    ```typescript
@@ -639,7 +751,7 @@ While Signals provide massive performance gains, a senior developer must underst
 
 ---
 
-## 13. High-Frequency Interview Questions
+## 14. High-Frequency Interview Questions
 
 ### Q1: What is the "Diamond Dependency Problem" and how do Signals solve it?
 **Answer**:
@@ -673,3 +785,11 @@ Yes! In fact, Signals make `OnPush` effortless. Reading a signal in an `OnPush` 
 ### Q6: How does Zoneless Angular work without `zone.js`?
 **Answer**:
 Instead of `zone.js` intercepting all async browser APIs and checking the entire component tree from top to bottom, Zoneless Angular uses direct notifications from Signals, template event bindings, and input changes to schedule rendering only for the dirty views.
+
+### Q7: What is `linkedSignal()` (Angular 22) and when should you choose it?
+**Answer**:
+`linkedSignal()` creates a **dependent writable signal**. When its source signal changes, it automatically re-evaluates and resets to a computed default, but unlike `computed()`, it is writable via `.set()` and `.update()`. Use it when you have state that depends on another signal but can be temporarily overridden by the user (e.g. shipping options resetting when country changes).
+
+### Q8: How does the `resource()` / `rxResource()` API improve async data fetching in Angular 22?
+**Answer**:
+`resource()` replaces manual `HttpClient` + `toSignal()` boilerplate, manual `isLoading` booleans, and error handling. It declaratively binds an input signal to an asynchronous loader (Promise or RxJS Observable), provides built-in `.value()`, `.isLoading()`, `.status()`, and `.error()` signals, automatically aborts in-flight requests when parameters change, and supports local optimistic updates.

@@ -9,7 +9,7 @@ This repository is organized into **modular topic folders**. Each topic has its 
 ## 🗂️ Topics & Modules
 
 ### 1. 📡 [Angular Signals (`signals/`)](signals/README.md)
-The modern reactivity model in Angular 16, 17, 18, and 19+.
+The modern reactivity model across Angular 16 – 22+ (including `linkedSignal`, `resource`, and default Zoneless).
 
 - 📖 **Study Guide**: [`signals/README.md`](signals/README.md) (or [`signals/angular-signals-interview-guide.md`](signals/angular-signals-interview-guide.md))
 - 💻 **Practical Examples**:
@@ -19,6 +19,7 @@ The modern reactivity model in Angular 16, 17, 18, and 19+.
   - [`signals/examples/signal-component-apis.ts`](signals/examples/signal-component-apis.ts) — `input()`, `output()`, `model()`, and `viewChild()`.
   - [`signals/examples/rxjs-signal-interop.ts`](signals/examples/rxjs-signal-interop.ts) — `toSignal()` & `toObservable()` interop patterns.
   - [`signals/examples/change-detection-and-zoneless.ts`](signals/examples/change-detection-and-zoneless.ts) — `OnPush` with Signals & Zoneless bootstrap.
+  - [`signals/examples/linked-signal-and-resource.ts`](signals/examples/linked-signal-and-resource.ts) — `linkedSignal()` & `resource()` / `rxResource()` (Angular 22 Stable).
 
 ---
 

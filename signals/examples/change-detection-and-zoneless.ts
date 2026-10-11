@@ -5,7 +5,7 @@ import {
   computed,
   inject,
   ChangeDetectorRef,
-  provideExperimentalZonelessChangeDetection,
+  provideZonelessChangeDetection,
   ApplicationConfig
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
@@ -71,18 +71,19 @@ export class OnPushComparisonComponent {
 }
 
 // ============================================================================
-// 2. Zoneless Application Bootstrap Configuration (Angular 18/19+)
+// 2. Zoneless Application Bootstrap Configuration (Angular 20 – 22+)
 // ============================================================================
 
 /**
- * In Zoneless Angular:
- * - zone.js is completely removed from the bundle.
+ * In Zoneless Angular (Stable in Angular 20.2+, Default in Angular 21/22+):
+ * - zone.js is completely eliminated from polyfills and bundles.
  * - Angular no longer monkey-patches setTimeout, Promise, or addEventListener.
  * - Signals directly schedule fine-grained re-renders through the application scheduler.
+ * - (Optional) If legacy Zone.js behavior is needed, use provideZoneChangeDetection().
  */
 export const zonelessAppConfig: ApplicationConfig = {
   providers: [
-    // Replaces Zone.js with Signal-driven microtask scheduling
-    provideExperimentalZonelessChangeDetection()
+    // Stable API in Angular 22 (graduated from experimental)
+    provideZonelessChangeDetection()
   ]
 };
