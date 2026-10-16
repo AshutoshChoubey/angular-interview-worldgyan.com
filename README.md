@@ -1,3 +1,9 @@
+<p align="center">
+  <a href="https://worldgyan.com">
+    <img src="assets/logo-banner.png" alt="WorldGyan - Next-Gen AI & Engineering" width="640" />
+  </a>
+</p>
+
 # Angular Interview & Study Guide — worldgyan.com
 
 Welcome to the **Angular Interview & Deep Dive Study Guide**, curated for frontend developers preparing for Senior, Lead, and Principal Angular engineering interviews.
