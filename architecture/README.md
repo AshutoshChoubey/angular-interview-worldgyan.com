@@ -310,3 +310,4 @@ Check out the runnable code examples in the [`examples/`](examples/) directory:
 - [`examples/app.config.ts`](examples/app.config.ts) — Enterprise ApplicationConfig with Zoneless, Router, Fetch, and Event Replay.
 - [`examples/angular.json`](examples/angular.json) — Annotated modern Angular application builder manifest.
 - [`examples/build-pipeline-and-deployment.sh`](examples/build-pipeline-and-deployment.sh) — Build CLI scripts and Nginx deployment configuration.
+

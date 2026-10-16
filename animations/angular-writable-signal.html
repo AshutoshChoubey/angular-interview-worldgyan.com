@@ -1,0 +1,1321 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Angular Writable Signal — 1080x1080 macOS Animation</title>
+  <style>
+    :root {
+      --bg-canvas: #050811;
+      --window-bg: #0b101e;
+      --window-header: #070b14;
+      --panel-bg: #0f172a;
+      --panel-border: #1e293b;
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+      --text-dim: #64748b;
+      --emerald: #10b981;
+      --emerald-bright: #34d399;
+      --emerald-glow: rgba(16, 185, 129, 0.35);
+      --indigo: #6366f1;
+      --cyan: #38bdf8;
+      --amber: #f59e0b;
+      --red-dot: #ff5f56;
+      --yellow-dot: #ffbd2e;
+      --green-dot: #27c93f;
+      --font-mono: 'JetBrains Mono', 'Fira Code', 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+      --font-sans: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', Roboto, sans-serif;
+      --loop-duration: 8s;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    html, body {
+      width: 100%;
+      min-height: 100vh;
+      background-color: #020409;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: var(--font-mono);
+      color: var(--text-main);
+      overflow-x: hidden;
+    }
+
+    /* 1080x1080 Square Stage Container */
+    .stage-1080 {
+      width: 1080px;
+      height: 1080px;
+      min-width: 1080px;
+      min-height: 1080px;
+      position: relative;
+      background:
+        radial-gradient(circle at 18% 22%, rgba(99, 102, 241, 0.14) 0%, transparent 45%),
+        radial-gradient(circle at 82% 76%, rgba(16, 185, 129, 0.16) 0%, transparent 48%),
+        linear-gradient(145deg, #050811 0%, #0a0f1d 50%, #050811 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 44px;
+      overflow: hidden;
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      box-shadow: 0 30px 90px rgba(0, 0, 0, 0.75);
+    }
+
+    /* Subtle Architectural Grid Overlay */
+    .stage-1080::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background-image:
+        linear-gradient(to right, rgba(148, 163, 184, 0.04) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(148, 163, 184, 0.04) 1px, transparent 1px);
+      background-size: 36px 36px;
+      pointer-events: none;
+    }
+
+    /* Main Dark-Mode macOS Browser Window */
+    .macos-window {
+      width: 992px;
+      height: 992px;
+      background: rgba(11, 16, 30, 0.94);
+      border: 1px solid rgba(148, 163, 184, 0.18);
+      border-radius: 20px;
+      box-shadow:
+        0 32px 80px rgba(0, 0, 0, 0.75),
+        0 0 0 1px rgba(255, 255, 255, 0.05) inset;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      position: relative;
+      z-index: 2;
+      backdrop-filter: blur(16px);
+    }
+
+    /* macOS Window Titlebar */
+    .window-titlebar {
+      height: 58px;
+      background: linear-gradient(180deg, #111827 0%, #090d16 100%);
+      border-bottom: 1px solid #1e293b;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 22px;
+      user-select: none;
+    }
+
+    .window-dots {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      width: 140px;
+    }
+
+    .w-dot {
+      width: 13px;
+      height: 13px;
+      border-radius: 50%;
+      display: inline-block;
+      box-shadow: inset 0 1px 2px rgba(255, 255, 255, 0.35);
+    }
+
+    .w-dot.red { background-color: var(--red-dot); }
+    .w-dot.yellow { background-color: var(--yellow-dot); }
+    .w-dot.green { background-color: var(--green-dot); }
+
+    .address-bar {
+      flex: 1;
+      max-width: 520px;
+      height: 34px;
+      background: #060911;
+      border: 1px solid #1e293b;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      font-size: 12.5px;
+      color: var(--text-muted);
+      padding: 0 16px;
+    }
+
+    .address-bar .lock-icon {
+      color: var(--emerald);
+      font-size: 12px;
+    }
+
+    .address-bar .url-host {
+      color: var(--text-main);
+      font-weight: 600;
+    }
+
+    .address-bar .url-path {
+      color: var(--cyan);
+    }
+
+    .window-status {
+      width: 140px;
+      display: flex;
+      justify-content: flex-end;
+    }
+
+    .loop-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--emerald-bright);
+      background: rgba(16, 185, 129, 0.12);
+      border: 1px solid rgba(16, 185, 129, 0.35);
+      padding: 4px 10px;
+      border-radius: 999px;
+      letter-spacing: 0.04em;
+    }
+
+    .pulse-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background-color: var(--emerald-bright);
+      animation: livePulse 1.6s infinite ease-in-out;
+    }
+
+    /* Window Content Area */
+    .window-body {
+      flex: 1;
+      padding: 28px 30px 26px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      gap: 22px;
+      position: relative;
+    }
+
+    /* Top Architectural Header Banner */
+    .header-banner {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: linear-gradient(90deg, rgba(30, 41, 59, 0.55) 0%, rgba(15, 23, 42, 0.4) 100%);
+      border: 1px solid #1e293b;
+      border-radius: 14px;
+      padding: 18px 24px;
+    }
+
+    .banner-left .eyebrow {
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      color: var(--emerald-bright);
+      display: block;
+      margin-bottom: 5px;
+    }
+
+    .banner-left h1 {
+      font-family: var(--font-sans);
+      font-size: 23px;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      color: #ffffff;
+    }
+
+    .banner-right {
+      display: flex;
+      gap: 10px;
+    }
+
+    .phase-chip {
+      padding: 7px 12px;
+      border-radius: 8px;
+      background: #090d16;
+      border: 1px solid #1e293b;
+      font-size: 11.5px;
+      color: var(--text-muted);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .phase-chip strong {
+      color: var(--text-main);
+    }
+
+    .phase-chip.chip-push {
+      animation: chipHighlight var(--loop-duration) infinite;
+    }
+
+    /* Main Split Grid: Left Code Panel + Right Browser Preview Card */
+    .split-workspace {
+      display: grid;
+      grid-template-columns: 500px 410px;
+      justify-content: space-between;
+      align-items: stretch;
+      flex: 1;
+      position: relative;
+      gap: 22px;
+    }
+
+    /* Left Panel: Code Editor */
+    .code-panel {
+      background: #080c17;
+      border: 1px solid #1e293b;
+      border-radius: 16px;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      box-shadow: 0 14px 34px rgba(0, 0, 0, 0.45);
+      position: relative;
+    }
+
+    .panel-tabbar {
+      height: 44px;
+      background: #0d1324;
+      border-bottom: 1px solid #1e293b;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 16px;
+    }
+
+    .file-tab {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: #080c17;
+      border: 1px solid #1e293b;
+      border-bottom: none;
+      padding: 7px 14px;
+      border-radius: 8px 8px 0 0;
+      font-size: 12px;
+      font-weight: 600;
+      color: #e2e8f0;
+      transform: translateY(4px);
+    }
+
+    .ts-badge {
+      background: #2563eb;
+      color: #ffffff;
+      font-size: 10px;
+      font-weight: 800;
+      padding: 1px 5px;
+      border-radius: 3px;
+    }
+
+    .panel-tag {
+      font-size: 11px;
+      color: var(--text-dim);
+    }
+
+    .code-editor-body {
+      padding: 20px 0 16px;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+
+    .code-lines {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      font-size: 13.5px;
+      line-height: 1.68;
+    }
+
+    .code-line {
+      display: flex;
+      align-items: center;
+      padding: 3px 18px 3px 14px;
+      position: relative;
+      border-left: 3px solid transparent;
+      transition: background 0.2s ease;
+    }
+
+    .line-num {
+      width: 28px;
+      color: #475569;
+      font-size: 12px;
+      user-select: none;
+      flex-shrink: 0;
+    }
+
+    .line-content {
+      white-space: pre;
+      color: #e2e8f0;
+    }
+
+    /* Syntax Highlighting Colors */
+    .kw { color: #c084fc; font-weight: 600; }
+    .fn { color: #38bdf8; }
+    .str { color: #fcd34d; }
+    .num { color: #fb923c; font-weight: 700; }
+    .cm { color: #64748b; font-style: italic; }
+    .op { color: #94a3b8; }
+    .prop { color: #93c5fd; }
+
+    /* Highlighted Line 1: count = signal(0) */
+    .code-line.signal-init-line {
+      background: rgba(99, 102, 241, 0.08);
+      border-left-color: #6366f1;
+    }
+
+    .signal-value-pill {
+      margin-left: auto;
+      font-size: 11px;
+      font-weight: 700;
+      padding: 2px 8px;
+      border-radius: 6px;
+      background: rgba(15, 23, 42, 0.9);
+      border: 1px solid #334155;
+      color: var(--cyan);
+      position: relative;
+      overflow: hidden;
+    }
+
+    /* Highlighted Line 2: count.update(n => n + 1) — Glowing Emerald on Click */
+    .code-line.signal-update-line {
+      margin: 4px 0;
+      padding-top: 7px;
+      padding-bottom: 7px;
+      border-radius: 0 8px 8px 0;
+      animation: emeraldLineGlow var(--loop-duration) infinite;
+    }
+
+    .exec-pill {
+      margin-left: auto;
+      font-size: 10.5px;
+      font-weight: 800;
+      letter-spacing: 0.05em;
+      padding: 3px 9px;
+      border-radius: 999px;
+      background: rgba(16, 185, 129, 0.2);
+      border: 1px solid var(--emerald-bright);
+      color: #ecfdf5;
+      box-shadow: 0 0 14px rgba(16, 185, 129, 0.45);
+      opacity: 0;
+      transform: scale(0.88);
+      animation: execPillShow var(--loop-duration) infinite;
+    }
+
+    /* ReactiveNode Memory Graph Box inside Left Panel Footer */
+    .reactive-node-box {
+      margin: 12px 16px 0;
+      padding: 14px 16px;
+      background: #0b1120;
+      border: 1px solid #1e293b;
+      border-radius: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .rn-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 11px;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      font-weight: 700;
+    }
+
+    .rn-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+    }
+
+    .rn-cell {
+      background: #070a14;
+      border: 1px solid #1e293b;
+      border-radius: 8px;
+      padding: 8px 10px;
+    }
+
+    .rn-label {
+      font-size: 10px;
+      color: var(--text-dim);
+      display: block;
+      margin-bottom: 3px;
+    }
+
+    .rn-val {
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--text-main);
+    }
+
+    /* Slot-style state swap for 0 -> 1 */
+    .state-swap {
+      display: inline-grid;
+      vertical-align: bottom;
+    }
+
+    .state-swap > span {
+      grid-area: 1 / 1;
+    }
+
+    .val-zero {
+      animation: showZero var(--loop-duration) infinite;
+    }
+
+    .val-one {
+      color: var(--emerald-bright);
+      animation: showOne var(--loop-duration) infinite;
+    }
+
+    /* Right Panel: Browser Preview Card */
+    .preview-panel {
+      background: #080c17;
+      border: 1px solid #1e293b;
+      border-radius: 16px;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      box-shadow: 0 14px 34px rgba(0, 0, 0, 0.45);
+      position: relative;
+    }
+
+    .preview-toolbar {
+      height: 44px;
+      background: #0d1324;
+      border-bottom: 1px solid #1e293b;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 16px;
+      font-size: 11.5px;
+    }
+
+    .preview-url {
+      color: var(--text-muted);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .zoneless-pill {
+      font-size: 10.5px;
+      font-weight: 700;
+      color: #a5b4fc;
+      background: rgba(99, 102, 241, 0.14);
+      border: 1px solid rgba(99, 102, 241, 0.35);
+      padding: 2px 8px;
+      border-radius: 6px;
+    }
+
+    .preview-stage {
+      flex: 1;
+      padding: 26px 24px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      background:
+        radial-gradient(circle at 50% 35%, rgba(16, 185, 129, 0.08), transparent 65%);
+      position: relative;
+    }
+
+    /* UI Component Preview Card */
+    .ui-component-card {
+      background: linear-gradient(180deg, #111827 0%, #0b1120 100%);
+      border: 1px solid #1e293b;
+      border-radius: 16px;
+      padding: 26px 22px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      gap: 20px;
+      box-shadow: 0 12px 30px rgba(0, 0, 0, 0.4);
+      position: relative;
+      animation: cardBorderPulse var(--loop-duration) infinite;
+    }
+
+    .component-tag-header {
+      width: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 11px;
+      color: var(--text-dim);
+      border-bottom: 1px solid rgba(148, 163, 184, 0.1);
+      padding-bottom: 10px;
+    }
+
+    .component-tag-header code {
+      color: var(--cyan);
+      font-weight: 700;
+    }
+
+    .binding-badge {
+      font-size: 10px;
+      color: var(--emerald-bright);
+      background: rgba(16, 185, 129, 0.1);
+      border: 1px solid rgba(16, 185, 129, 0.25);
+      padding: 2px 7px;
+      border-radius: 4px;
+    }
+
+    /* Counter Display Box ("Count: 0" -> "Count: 1") */
+    .counter-display-well {
+      width: 100%;
+      padding: 28px 20px;
+      background: #060911;
+      border: 1px solid #1e293b;
+      border-radius: 14px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 10px;
+      position: relative;
+      overflow: hidden;
+      animation: counterWellGlow var(--loop-duration) infinite;
+    }
+
+    .counter-caption {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--text-dim);
+    }
+
+    .counter-readout {
+      font-size: 42px;
+      font-weight: 800;
+      letter-spacing: -0.03em;
+      color: #ffffff;
+      display: flex;
+      align-items: baseline;
+      gap: 12px;
+    }
+
+    .digit-window {
+      display: inline-grid;
+      position: relative;
+      min-width: 34px;
+      text-align: left;
+    }
+
+    .digit-window > span {
+      grid-area: 1 / 1;
+    }
+
+    .digit-0 {
+      color: #f8fafc;
+      animation: digitZeroAnim var(--loop-duration) infinite;
+    }
+
+    .digit-1 {
+      color: var(--emerald-bright);
+      text-shadow: 0 0 24px rgba(16, 185, 129, 0.7);
+      animation: digitOneAnim var(--loop-duration) infinite;
+    }
+
+    /* Increment Button */
+    .increment-btn-wrap {
+      position: relative;
+      width: 100%;
+      display: flex;
+      justify-content: center;
+      margin-top: 4px;
+    }
+
+    .increment-btn {
+      width: 100%;
+      height: 54px;
+      border-radius: 12px;
+      background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+      border: 1px solid #34d399;
+      color: #022c22;
+      font-family: var(--font-mono);
+      font-size: 15px;
+      font-weight: 800;
+      letter-spacing: 0.02em;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      box-shadow: 0 8px 20px rgba(16, 185, 129, 0.28);
+      position: relative;
+      overflow: hidden;
+      animation: buttonPressAnim var(--loop-duration) infinite;
+    }
+
+    .increment-btn .btn-plus {
+      width: 24px;
+      height: 24px;
+      border-radius: 6px;
+      background: rgba(2, 44, 34, 0.18);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 17px;
+    }
+
+    /* Expanding Click Ripple Ring on Button */
+    .click-ripple {
+      position: absolute;
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      border: 2.5px solid #6ee7b7;
+      background: rgba(52, 211, 153, 0.25);
+      top: 50%;
+      left: 58%;
+      transform: translate(-50%, -50%) scale(0);
+      pointer-events: none;
+      opacity: 0;
+      animation: clickRippleAnim var(--loop-duration) infinite;
+    }
+
+    /* DOM Telemetry Log Card inside Preview Panel */
+    .dom-telemetry-card {
+      background: #0b1120;
+      border: 1px solid #1e293b;
+      border-radius: 12px;
+      padding: 14px 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      font-size: 11.5px;
+    }
+
+    .telemetry-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      color: var(--text-muted);
+    }
+
+    .telemetry-row code {
+      color: var(--emerald-bright);
+      font-weight: 700;
+    }
+
+    /* SVG Signal Bridge Overlay connecting Left Code Panel to Right Counter */
+    .signal-bridge-svg {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 15;
+    }
+
+    .bridge-path-bg {
+      fill: none;
+      stroke: rgba(56, 189, 248, 0.16);
+      stroke-width: 2;
+      stroke-dasharray: 5 5;
+    }
+
+    .bridge-path-active {
+      fill: none;
+      stroke: url(#emeraldGrad);
+      stroke-width: 3.5;
+      stroke-linecap: round;
+      stroke-dasharray: 280;
+      stroke-dashoffset: 280;
+      filter: drop-shadow(0 0 8px rgba(16, 185, 129, 0.8));
+      animation: signalWavePath var(--loop-duration) infinite;
+    }
+
+    /* Animated Cursor SVG */
+    .animated-cursor {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 38px;
+      height: 38px;
+      z-index: 30;
+      pointer-events: none;
+      filter: drop-shadow(0 6px 12px rgba(0, 0, 0, 0.65));
+      animation: cursorJourney var(--loop-duration) infinite cubic-bezier(0.22, 1, 0.36, 1);
+    }
+
+    /* Bottom 8-Second Loop Timeline Scrubber */
+    .timeline-footer {
+      background: #080c17;
+      border: 1px solid #1e293b;
+      border-radius: 12px;
+      padding: 12px 18px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .timeline-steps {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 10px;
+      font-size: 11px;
+      color: var(--text-muted);
+    }
+
+    .t-step {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+    }
+
+    .t-step .t-idx {
+      font-weight: 800;
+      color: var(--emerald-bright);
+      background: rgba(16, 185, 129, 0.14);
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-size: 10px;
+    }
+
+    .timeline-track {
+      width: 100%;
+      height: 5px;
+      background: #111827;
+      border-radius: 999px;
+      overflow: hidden;
+    }
+
+    .timeline-fill {
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, #6366f1 0%, #10b981 55%, #34d399 100%);
+      box-shadow: 0 0 12px rgba(16, 185, 129, 0.6);
+      animation: timelineProgress var(--loop-duration) infinite linear;
+    }
+
+    /* =========================================================================
+       KEYFRAME ANIMATIONS (8-SECOND CONTINUOUS LOOP)
+       Timeline Breakdown:
+       - 0% to 24% (0.0s - 1.9s): Initial state (Count: 0), cursor glides to button
+       - 26% to 32% (2.1s - 2.5s): Cursor clicks "Increment" button
+       - 32% to 68% (2.5s - 5.4s): `count.update(n => n + 1)` glows emerald,
+                                   SVG signal wave fires, Count increments 0 -> 1
+       - 68% to 90% (5.4s - 7.2s): Settled state (Count: 1) held clearly for reading
+       - 90% to 100% (7.2s - 8.0s): Smooth reset for seamless loop
+       ========================================================================= */
+
+    @keyframes livePulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.45; transform: scale(0.85); }
+    }
+
+    /* 1. Cursor Movement & Click */
+    @keyframes cursorJourney {
+      0%, 8% {
+        transform: translate(860px, 640px) scale(1);
+      }
+      24% {
+        transform: translate(745px, 470px) scale(1);
+      }
+      28% {
+        transform: translate(745px, 470px) scale(0.84);
+      }
+      33% {
+        transform: translate(745px, 470px) scale(1);
+      }
+      52%, 88% {
+        transform: translate(875px, 595px) scale(1);
+      }
+      100% {
+        transform: translate(860px, 640px) scale(1);
+      }
+    }
+
+    /* 2. Button Press Response */
+    @keyframes buttonPressAnim {
+      0%, 25%, 35%, 100% {
+        transform: scale(1);
+        box-shadow: 0 8px 20px rgba(16, 185, 129, 0.28);
+        filter: brightness(1);
+      }
+      28%, 31% {
+        transform: scale(0.95);
+        box-shadow: 0 0 32px rgba(52, 211, 153, 0.75);
+        filter: brightness(1.18);
+      }
+    }
+
+    /* 3. Button Click Ripple */
+    @keyframes clickRippleAnim {
+      0%, 26% {
+        opacity: 0;
+        transform: translate(-50%, -50%) scale(0.2);
+      }
+      29% {
+        opacity: 1;
+        transform: translate(-50%, -50%) scale(1);
+      }
+      40%, 100% {
+        opacity: 0;
+        transform: translate(-50%, -50%) scale(3.2);
+      }
+    }
+
+    /* 4. Code Line `this.count.update(n => n + 1)` Glowing Emerald */
+    @keyframes emeraldLineGlow {
+      0%, 27%, 88%, 100% {
+        background: rgba(16, 185, 129, 0.03);
+        border-left-color: rgba(16, 185, 129, 0.25);
+        box-shadow: none;
+      }
+      31%, 66% {
+        background: linear-gradient(90deg, rgba(16, 185, 129, 0.28) 0%, rgba(16, 185, 129, 0.08) 100%);
+        border-left-color: #34d399;
+        box-shadow:
+          0 0 28px rgba(16, 185, 129, 0.35),
+          inset 0 0 14px rgba(16, 185, 129, 0.22);
+      }
+    }
+
+    @keyframes execPillShow {
+      0%, 28%, 70%, 100% {
+        opacity: 0;
+        transform: scale(0.88);
+      }
+      32%, 62% {
+        opacity: 1;
+        transform: scale(1);
+      }
+    }
+
+    /* 5. SVG Signal Notification Wave from Code to Preview */
+    @keyframes signalWavePath {
+      0%, 30% {
+        stroke-dashoffset: 280;
+        opacity: 0;
+      }
+      33% {
+        opacity: 1;
+      }
+      45%, 68% {
+        stroke-dashoffset: 0;
+        opacity: 1;
+      }
+      78%, 100% {
+        stroke-dashoffset: -280;
+        opacity: 0;
+      }
+    }
+
+    /* 6. Counter Digit Smooth Increment (0 -> 1) */
+    @keyframes digitZeroAnim {
+      0%, 36% {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+        filter: blur(0px);
+      }
+      42%, 90% {
+        opacity: 0;
+        transform: translateY(-26px) scale(0.85);
+        filter: blur(4px);
+      }
+      95%, 100% {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+        filter: blur(0px);
+      }
+    }
+
+    @keyframes digitOneAnim {
+      0%, 36% {
+        opacity: 0;
+        transform: translateY(26px) scale(0.85);
+        filter: blur(4px);
+      }
+      43%, 88% {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+        filter: blur(0px);
+      }
+      95%, 100% {
+        opacity: 0;
+        transform: translateY(26px) scale(0.85);
+        filter: blur(4px);
+      }
+    }
+
+    /* 7. Inline State Text Swap (0 -> 1) */
+    @keyframes showZero {
+      0%, 37%, 94%, 100% { opacity: 1; }
+      41%, 90% { opacity: 0; }
+    }
+
+    @keyframes showOne {
+      0%, 37%, 94%, 100% { opacity: 0; }
+      41%, 90% { opacity: 1; }
+    }
+
+    /* 8. Counter Well & Card Emerald Glow */
+    @keyframes counterWellGlow {
+      0%, 37%, 88%, 100% {
+        border-color: #1e293b;
+        box-shadow: inset 0 0 0 rgba(16, 185, 129, 0);
+      }
+      43%, 72% {
+        border-color: #10b981;
+        box-shadow:
+          0 0 32px rgba(16, 185, 129, 0.25),
+          inset 0 0 22px rgba(16, 185, 129, 0.14);
+      }
+    }
+
+    @keyframes cardBorderPulse {
+      0%, 37%, 88%, 100% {
+        border-color: #1e293b;
+      }
+      43%, 72% {
+        border-color: rgba(52, 211, 153, 0.55);
+      }
+    }
+
+    @keyframes chipHighlight {
+      0%, 28%, 85%, 100% {
+        border-color: #1e293b;
+        background: #090d16;
+      }
+      33%, 72% {
+        border-color: var(--emerald);
+        background: rgba(16, 185, 129, 0.12);
+      }
+    }
+
+    @keyframes timelineProgress {
+      0% { width: 0%; }
+      100% { width: 100%; }
+    }
+
+    /* Responsive Scaling for Smaller Viewports while keeping 1080x1080 Geometry */
+    @media (max-width: 1120px) {
+      .stage-1080 {
+        transform: scale(0.82);
+        transform-origin: center center;
+      }
+    }
+    @media (max-width: 920px) {
+      .stage-1080 {
+        transform: scale(0.64);
+        transform-origin: center center;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="stage-1080" role="img" aria-label="Animated Angular Writable Signal showcase in a dark-mode macOS window">
+    <div class="macos-window">
+      <!-- Top macOS Window Titlebar -->
+      <div class="window-titlebar">
+        <div class="window-dots" aria-hidden="true">
+          <span class="w-dot red"></span>
+          <span class="w-dot yellow"></span>
+          <span class="w-dot green"></span>
+        </div>
+
+        <div class="address-bar">
+          <span class="lock-icon">🔒</span>
+          <span class="url-host">worldgyan.com</span>
+          <span>/courses/angular-architecture</span>
+        </div>
+
+        <div class="window-status">
+          <span class="loop-badge">
+            <span class="pulse-dot"></span>
+            signal()
+          </span>
+        </div>
+      </div>
+
+      <!-- Main Window Body -->
+      <div class="window-body">
+        <!-- Header Banner -->
+        <div class="header-banner">
+          <div class="banner-left">
+            <span class="eyebrow">FINE-GRAINED PUSH / PULL REACTIVITY</span>
+            <h1>Angular Signal Part 2: WritableSignal Push/Pull &amp; O(1) DOM</h1>
+          </div>
+          <div class="banner-right">
+            <div class="phase-chip">
+              <span>Read:</span>
+              <strong>count()</strong>
+            </div>
+            <div class="phase-chip chip-push">
+              <span>Write:</span>
+              <strong>.update(n =&gt; n + 1)</strong>
+            </div>
+          </div>
+        </div>
+
+        <!-- Split Workspace: Left Code Panel + Right Browser Preview Card -->
+        <div class="split-workspace">
+          <!-- SVG Reactive Signal Pulse Bridge between Code and Preview -->
+          <svg class="signal-bridge-svg" viewBox="0 0 932 690" preserveAspectRatio="none" aria-hidden="true">
+            <defs>
+              <linearGradient id="emeraldGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+                <stop offset="0%" stop-color="#10b981" />
+                <stop offset="50%" stop-color="#34d399" />
+                <stop offset="100%" stop-color="#6ee7b7" />
+              </linearGradient>
+            </defs>
+            <!-- Dashed guide curve from code line to counter display -->
+            <path
+              class="bridge-path-bg"
+              d="M 485 370 C 535 370, 515 225, 558 225"
+            />
+            <!-- Glowing animated emerald signal pulse -->
+            <path
+              class="bridge-path-active"
+              d="M 485 370 C 535 370, 515 225, 558 225"
+            />
+          </svg>
+
+          <!-- Animated macOS Vector Cursor -->
+          <svg class="animated-cursor" viewBox="0 0 32 32" fill="none" aria-hidden="true">
+            <path
+              d="M7 4L25 14.5L16.2 16.8L21 25.5L17.6 27.3L12.8 18.6L7 23.5V4Z"
+              fill="#FFFFFF"
+              stroke="#050811"
+              stroke-width="2"
+              stroke-linejoin="round"
+            />
+          </svg>
+
+          <!-- LEFT PANEL: TypeScript Code Panel -->
+          <div class="code-panel">
+            <div class="panel-tabbar">
+              <div class="file-tab">
+                <span class="ts-badge">TS</span>
+                <span>counter.component.ts</span>
+              </div>
+              <span class="panel-tag">Angular v19+</span>
+            </div>
+
+            <div class="code-editor-body">
+              <div class="code-lines">
+                <div class="code-line">
+                  <span class="line-num">01</span>
+                  <span class="line-content"><span class="kw">import</span> &#123; <span class="fn">Component</span>, <span class="fn">signal</span> &#125; <span class="kw">from</span> <span class="str">'@angular/core'</span>;</span>
+                </div>
+                <div class="code-line">
+                  <span class="line-num">02</span>
+                  <span class="line-content"></span>
+                </div>
+                <div class="code-line">
+                  <span class="line-num">03</span>
+                  <span class="line-content"><span class="kw">@Component</span>(&#123;</span>
+                </div>
+                <div class="code-line">
+                  <span class="line-num">04</span>
+                  <span class="line-content">  <span class="prop">selector</span>: <span class="str">'app-counter'</span>,</span>
+                </div>
+                <div class="code-line">
+                  <span class="line-num">05</span>
+                  <span class="line-content">  <span class="prop">template</span>: <span class="str">`</span></span>
+                </div>
+                <div class="code-line">
+                  <span class="line-num">06</span>
+                  <span class="line-content"><span class="str">    &lt;p&gt;Count: &#123;&#123; count() &#125;&#125;&lt;/p&gt;</span></span>
+                </div>
+                <div class="code-line">
+                  <span class="line-num">07</span>
+                  <span class="line-content"><span class="str">    &lt;button (click)="increment()"&gt;Increment&lt;/button&gt;</span></span>
+                </div>
+                <div class="code-line">
+                  <span class="line-num">08</span>
+                  <span class="line-content"><span class="str">  `</span></span>
+                </div>
+                <div class="code-line">
+                  <span class="line-num">09</span>
+                  <span class="line-content">&#125;)</span>
+                </div>
+                <div class="code-line">
+                  <span class="line-num">10</span>
+                  <span class="line-content"><span class="kw">export class</span> <span class="fn">CounterComponent</span> &#123;</span>
+                </div>
+                <div class="code-line">
+                  <span class="line-num">11</span>
+                  <span class="line-content">  <span class="cm">// 1. Create WritableSignal with initial value 0</span></span>
+                </div>
+                <div class="code-line signal-init-line">
+                  <span class="line-num">12</span>
+                  <span class="line-content">  <span class="prop">count</span> = <span class="fn">signal</span>(<span class="num">0</span>);</span>
+                  <span class="signal-value-pill">
+                    val:
+                    <span class="state-swap">
+                      <span class="val-zero">0</span>
+                      <span class="val-one">1</span>
+                    </span>
+                  </span>
+                </div>
+                <div class="code-line">
+                  <span class="line-num">13</span>
+                  <span class="line-content"></span>
+                </div>
+                <div class="code-line">
+                  <span class="line-num">14</span>
+                  <span class="line-content">  <span class="fn">increment</span>() &#123;</span>
+                </div>
+                <!-- GLOWING EMERALD UPDATE LINE -->
+                <div class="code-line signal-update-line">
+                  <span class="line-num">15</span>
+                  <span class="line-content">    <span class="kw">this</span>.<span class="prop">count</span>.<span class="fn">update</span>(n =&gt; n + <span class="num">1</span>);</span>
+                  <span class="exec-pill">⚡ FIRED</span>
+                </div>
+                <div class="code-line">
+                  <span class="line-num">16</span>
+                  <span class="line-content">  &#125;</span>
+                </div>
+                <div class="code-line">
+                  <span class="line-num">17</span>
+                  <span class="line-content">&#125;</span>
+                </div>
+              </div>
+
+              <!-- Internal ReactiveNode State Inspector -->
+              <div class="reactive-node-box">
+                <div class="rn-header">
+                  <span>ReactiveNode Producer Graph</span>
+                  <span>Object.is(prev, next)</span>
+                </div>
+                <div class="rn-grid">
+                  <div class="rn-cell">
+                    <span class="rn-label">CURRENT VALUE</span>
+                    <span class="rn-val state-swap">
+                      <span class="val-zero">0</span>
+                      <span class="val-one">1</span>
+                    </span>
+                  </div>
+                  <div class="rn-cell">
+                    <span class="rn-label">NODE VERSION</span>
+                    <span class="rn-val state-swap">
+                      <span class="val-zero">v1 (init)</span>
+                      <span class="val-one">v2 (+1)</span>
+                    </span>
+                  </div>
+                  <div class="rn-cell">
+                    <span class="rn-label">CONSUMER VIEW</span>
+                    <span class="rn-val state-swap">
+                      <span class="val-zero">CLEAN</span>
+                      <span class="val-one">REFRESHED</span>
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- RIGHT PANEL: Browser Preview Card -->
+          <div class="preview-panel">
+            <div class="preview-toolbar">
+              <div class="preview-url">
+                <span>🌐</span>
+                <span>Live Component Preview</span>
+              </div>
+              <span class="zoneless-pill">Zoneless O(1)</span>
+            </div>
+
+            <div class="preview-stage">
+              <div class="ui-component-card">
+                <div class="component-tag-header">
+                  <code>&lt;app-counter&gt;</code>
+                  <span class="binding-badge">Signal Consumer</span>
+                </div>
+
+                <!-- Live Counter Display: "Count: 0" -> "Count: 1" -->
+                <div class="counter-display-well">
+                  <span class="counter-caption">Template Expression · &#123;&#123; count() &#125;&#125;</span>
+                  <div class="counter-readout">
+                    <span>Count:</span>
+                    <span class="digit-window">
+                      <span class="digit-0">0</span>
+                      <span class="digit-1">1</span>
+                    </span>
+                  </div>
+                </div>
+
+                <!-- Interactive Increment Button Target -->
+                <div class="increment-btn-wrap">
+                  <div class="increment-btn">
+                    <span class="btn-plus">+</span>
+                    <span>Increment</span>
+                  </div>
+                  <div class="click-ripple"></div>
+                </div>
+              </div>
+
+              <!-- Live Change Detection Telemetry -->
+              <div class="dom-telemetry-card">
+                <div class="telemetry-row">
+                  <span>1. Event Listener</span>
+                  <code>(click)="increment()"</code>
+                </div>
+                <div class="telemetry-row">
+                  <span>2. Producer Mutation</span>
+                  <code class="state-swap">
+                    <span class="val-zero">count() === 0</span>
+                    <span class="val-one">count.update(0 ➔ 1)</span>
+                  </code>
+                </div>
+                <div class="telemetry-row">
+                  <span>3. DOM Text Node Pull</span>
+                  <code class="state-swap">
+                    <span class="val-zero">"Count: 0"</span>
+                    <span class="val-one">"Count: 1" (0.04ms)</span>
+                  </code>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Bottom Timeline Bar -->
+        <div class="timeline-footer">
+          <div class="timeline-steps">
+            <div class="t-step">
+              <span class="t-idx">01</span>
+              <span>Init: <code>count = signal(0)</code></span>
+            </div>
+            <div class="t-step">
+              <span class="t-idx">02</span>
+              <span>Cursor clicks <strong>Increment</strong></span>
+            </div>
+            <div class="t-step">
+              <span class="t-idx">03</span>
+              <span><code>count.update(n =&gt; n + 1)</code> glows</span>
+            </div>
+            <div class="t-step">
+              <span class="t-idx">04</span>
+              <span>DOM pulls <code>Count: 1</code> (O(1))</span>
+            </div>
+          </div>
+          <div class="timeline-track">
+            <div class="timeline-fill"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <style>
+    html.res-4k body {
+      overflow: auto;
+      justify-content: flex-start;
+      align-items: flex-start;
+    }
+    html.res-4k .stage-1080 {
+      transform: scale(3.5555556) !important;
+      transform-origin: top left !important;
+      margin-bottom: 2760px;
+      margin-right: 2760px;
+    }
+  </style>
+  <script>
+    if (new URLSearchParams(location.search).get("res") === "4k") document.documentElement.classList.add("res-4k");
+  </script>
+</body>
+</html>
+

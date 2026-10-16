@@ -482,3 +482,4 @@ When SSR delivers a server-rendered HTML page to the browser, there is a short w
 - [x] **`angular.json`**: Uses `@angular/build:application`, unites Vite and esbuild, and handles CSR, SSR, and SSG in a single manifest.
 - [x] **`package.json`**: Angular 22 dependencies with `zone.js` omitted and TypeScript 5.8+.
 - [x] **Build Pipeline**: Comprehensive understanding of CSR (`browser/`), SSR (`browser/` + `server/`), and SSG static prerendering (`prerender: true`).
+

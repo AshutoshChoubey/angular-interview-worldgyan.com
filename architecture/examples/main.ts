@@ -37,3 +37,4 @@ bootstrapApplication(AppComponent, appConfig)
   .catch((err) => {
     console.error('Fatal Angular Bootstrap Error:', err);
   });
+

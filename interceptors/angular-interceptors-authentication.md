@@ -542,3 +542,4 @@ Angular reads the token from the specified cookie and automatically attaches it 
 
 ### Q12: How do Signals integrate with modern authentication state in Angular?
 **Answer:** Storing the authenticated user as `private _currentUser = signal<User | null>(null)` allows components to read `currentUser()` with fine-grained $O(1)$ reactivity. Derived state like `isAuthenticated = computed(() => !!this.currentUser())` updates synchronously without Zone.js traversal, enabling immediate DOM updates and zero unnecessary re-renders in Zoneless applications.
+

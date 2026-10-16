@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Angular OAuth 2.0 PKCE Flow: Proof Key for Code Exchange (1080x1080 macOS Animation)</title>
+  <style>
+    :root {
+      --bg-outer: #060a14;
+      --slate-bg: #0f172a;
+      --slate-deep: #090e1c;
+      --slate-card: #111c33;
+      --slate-border: #1e293b;
+      --slate-muted: #64748b;
+      --text-main: #f8fafc;
+      --text-secondary: #94a3b8;
+      --cyan: #38bdf8;
+      --emerald: #34d399;
+      --purple: #a855f7;
+      --amber: #fbbf24;
+      --rose: #f43f5e;
+      --red-dot: #ff5f56;
+      --yellow-dot: #ffbd2e;
+      --green-dot: #27c93f;
+      --font-sans: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', Roboto, sans-serif;
+      --font-mono: 'JetBrains Mono', 'Fira Code', Consolas, monospace;
+      --loop: 8s;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html, body {
+      width: 100%;
+      height: 100%;
+      background: var(--bg-outer);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: var(--font-sans);
+      color: var(--text-main);
+      overflow: hidden;
+    }
+
+    .stage-1080 {
+      width: 1080px;
+      height: 1080px;
+      min-width: 1080px;
+      min-height: 1080px;
+      background:
+        radial-gradient(circle at 20% 25%, rgba(168, 85, 247, 0.15) 0%, transparent 45%),
+        radial-gradient(circle at 80% 75%, rgba(56, 189, 248, 0.15) 0%, transparent 45%),
+        var(--slate-bg);
+      padding: 40px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+    }
+
+    .stage-1080::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background-image:
+        linear-gradient(to right, rgba(56, 189, 248, 0.04) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(56, 189, 248, 0.04) 1px, transparent 1px);
+      background-size: 36px 36px;
+      pointer-events: none;
+    }
+
+    .macos-window {
+      width: 1000px;
+      height: 1000px;
+      background: rgba(9, 14, 28, 0.96);
+      border: 1px solid rgba(168, 85, 247, 0.3);
+      border-radius: 20px;
+      box-shadow: 0 32px 80px rgba(0, 0, 0, 0.8), 0 0 40px rgba(168, 85, 247, 0.12);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      position: relative;
+      z-index: 2;
+    }
+
+    .window-titlebar {
+      height: 52px;
+      background: #0d1527;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 20px;
+    }
+
+    .window-dots {
+      display: flex;
+      gap: 8px;
+    }
+    .window-dot { width: 12px; height: 12px; border-radius: 50%; }
+    .window-dot.red { background: var(--red-dot); }
+    .window-dot.yellow { background: var(--yellow-dot); }
+    .window-dot.green { background: var(--green-dot); }
+
+    .window-title {
+      font-family: var(--font-mono);
+      font-size: 15px;
+      font-weight: 700;
+      color: #94a3b8;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .window-title .badge {
+      background: rgba(168, 85, 247, 0.14);
+      color: var(--purple);
+      border: 1px solid rgba(168, 85, 247, 0.3);
+      padding: 3px 10px;
+      border-radius: 5px;
+      font-size: 12.5px;
+    }
+
+    .window-author {
+      font-family: var(--font-mono);
+      font-size: 13px;
+      color: #94a3b8;
+    }
+
+    .window-content {
+      flex: 1;
+      padding: 26px 32px 22px;
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+    }
+
+    /* Hero Strip */
+    .hero-strip {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+      padding-bottom: 14px;
+    }
+    .hero-strip h1 {
+      font-size: 26px;
+      font-weight: 800;
+      color: #ffffff;
+      letter-spacing: -0.02em;
+    }
+    .hero-strip h1 span {
+      color: var(--purple);
+    }
+    .hero-pills {
+      display: flex;
+      gap: 8px;
+    }
+    .pill {
+      font-family: var(--font-mono);
+      font-size: 13px;
+      font-weight: 700;
+      padding: 5px 12px;
+      border-radius: 6px;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    .pill-purple { background: rgba(168, 85, 247, 0.14); color: var(--purple); border: 1px solid rgba(168, 85, 247, 0.3); }
+    .pill-cyan { background: rgba(56, 189, 248, 0.14); color: var(--cyan); border: 1px solid rgba(56, 189, 248, 0.3); }
+    .pill-emerald { background: rgba(52, 211, 153, 0.14); color: var(--emerald); border: 1px solid rgba(52, 211, 153, 0.3); }
+
+    /* PKCE Stage */
+    .pkce-stage {
+      flex: 1;
+      background: #080d1a;
+      border: 1px solid var(--slate-border);
+      border-radius: 14px;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      gap: 14px;
+    }
+
+    /* Party Row: Angular App vs Identity Provider */
+    .parties-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+    }
+
+    .party-card {
+      background: var(--slate-card);
+      border: 1px solid var(--slate-border);
+      border-radius: 10px;
+      padding: 14px 18px;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+    .party-card.angular { border-color: rgba(56, 189, 248, 0.4); }
+    .party-card.idp { border-color: rgba(168, 85, 247, 0.4); }
+
+    .party-icon {
+      font-size: 28px;
+    }
+    .party-text h3 {
+      font-size: 17px;
+      font-weight: 800;
+      color: #f8fafc;
+    }
+    .party-text p {
+      font-family: var(--font-mono);
+      font-size: 13.5px;
+      color: #94a3b8;
+    }
+
+    /* 4-Step PKCE Sequence Track */
+    .pkce-steps {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
+    }
+
+    .pkce-box {
+      background: #0d1527;
+      border: 1px solid var(--slate-border);
+      border-radius: 8px;
+      padding: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    .pkce-box .num {
+      font-family: var(--font-mono);
+      font-size: 12px;
+      font-weight: 800;
+      color: var(--cyan);
+    }
+    .pkce-box h4 {
+      font-size: 15px;
+      font-weight: 800;
+      color: #f8fafc;
+    }
+    .pkce-box p {
+      font-size: 13px;
+      color: #94a3b8;
+      line-height: 1.4;
+    }
+    .pkce-box code {
+      font-family: var(--font-mono);
+      font-size: 12px;
+      background: #1e293b;
+      padding: 2px 6px;
+      border-radius: 4px;
+      color: #cbd5e1;
+    }
+
+    /* Math Formula Strip */
+    .formula-bar {
+      background: rgba(168, 85, 247, 0.08);
+      border: 1px solid rgba(168, 85, 247, 0.28);
+      border-radius: 10px;
+      padding: 12px 18px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-family: var(--font-mono);
+      font-size: 14.5px;
+      color: #e2e8f0;
+    }
+    .formula-bar span strong {
+      color: var(--purple);
+    }
+
+    /* Code Preview */
+    .code-preview-pane {
+      background: #060a14;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 12px;
+      padding: 14px 18px;
+      font-family: var(--font-mono);
+      font-size: 14px;
+      line-height: 1.55;
+      color: #e2e8f0;
+    }
+    .kw { color: #f43f5e; font-weight: 700; }
+    .fn { color: #38bdf8; font-weight: 700; }
+    .str { color: #34d399; }
+    .prop { color: #c084fc; }
+    .comment { color: #64748b; font-style: italic; }
+
+    /* Footer */
+    .footer-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-family: var(--font-mono);
+      font-size: 13px;
+      color: #94a3b8;
+      padding-top: 10px;
+      border-top: 1px solid rgba(255, 255, 255, 0.06);
+    }
+  </style>
+</head>
+<body>
+  <div class="stage-1080">
+    <div class="macos-window">
+      <!-- Titlebar -->
+      <div class="window-titlebar">
+        <div class="window-dots">
+          <span class="window-dot red"></span>
+          <span class="window-dot yellow"></span>
+          <span class="window-dot green"></span>
+        </div>
+        <div class="window-title">
+          <span>Enterprise Security</span>
+          <span class="badge">OAuth 2.0 PKCE Flow</span>
+        </div>
+        <div class="window-author">worldgyan.com · Ashutosh Kumar Choubey</div>
+      </div>
+
+      <!-- Main Content -->
+      <div class="window-content">
+        <!-- Hero Header -->
+        <div class="hero-strip">
+          <h1>OAuth 2.0 + OIDC: <span>PKCE Handshake</span></h1>
+          <div class="hero-pills">
+            <span class="pill pill-purple">RFC 7636</span>
+            <span class="pill pill-cyan">Zero Secret Leak</span>
+            <span class="pill pill-emerald">SHA-256</span>
+          </div>
+        </div>
+
+        <!-- PKCE Architecture Canvas -->
+        <div class="pkce-stage">
+          <!-- Parties -->
+          <div class="parties-row">
+            <div class="party-card angular">
+              <span class="party-icon">⚡</span>
+              <div class="party-text">
+                <h3>Angular 22 SPA</h3>
+                <p>Public Client (Browser / No Secret)</p>
+              </div>
+            </div>
+            <div class="party-card idp">
+              <span class="party-icon">🛡️</span>
+              <div class="party-text">
+                <h3>OAuth2 / OIDC IdP</h3>
+                <p>Auth0, Okta, Keycloak, Google</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- 4 Steps -->
+          <div class="pkce-steps">
+            <div class="pkce-box">
+              <span class="num">Step 01</span>
+              <h4>Generate PKCE</h4>
+              <p>Creates <code>code_verifier</code> (128 char random string) + computes <code>code_challenge</code>.</p>
+            </div>
+
+            <div class="pkce-box">
+              <span class="num">Step 02</span>
+              <h4>Auth Request</h4>
+              <p>Redirects to IdP with <code>code_challenge</code> &amp; <code>code_challenge_method=S256</code>.</p>
+            </div>
+
+            <div class="pkce-box">
+              <span class="num">Step 03</span>
+              <h4>Auth Code</h4>
+              <p>User logs in; IdP redirects back to Angular app with short-lived <code>code</code> in query param.</p>
+            </div>
+
+            <div class="pkce-box">
+              <span class="num">Step 04</span>
+              <h4>Token Exchange</h4>
+              <p>Angular POSTs <code>code</code> + <code>code_verifier</code>. IdP matches SHA256; returns JWT tokens!</p>
+            </div>
+          </div>
+
+          <!-- Math Cryptographic Strip -->
+          <div class="formula-bar">
+            <span><strong>PKCE Invariant:</strong> <code>code_challenge = BASE64URL(SHA256(code_verifier))</code></span>
+            <span>Prevents Authorization Code Interception Attacks</span>
+          </div>
+        </div>
+
+        <!-- Code Preview -->
+        <div class="code-preview-pane">
+<span class="comment">// auth.service.ts — Angular 22 OAuth2 / OpenID Connect PKCE Flow</span>
+<span class="kw">async function</span> <span class="fn">initiateLogin</span>() {
+  <span class="kw">const</span> verifier = <span class="fn">generateRandomString</span>(<span class="str">64</span>);
+  <span class="kw">const</span> challenge = <span class="kw">await</span> <span class="fn">sha256Base64Url</span>(verifier);
+  <span class="prop">sessionStorage</span>.<span class="fn">setItem</span>(<span class="str">'pkce_verifier'</span>, verifier); <span class="comment">// Safe in sessionStorage</span>
+  <span class="kw">const</span> authUrl = <span class="str">`https://auth.worldgyan.com/authorize?response_type=code`</span> +
+    <span class="str">`&amp;client_id=worldgyan_spa&amp;code_challenge=${challenge}&amp;code_challenge_method=S256`</span>;
+  <span class="prop">window</span>.<span class="prop">location</span>.<span class="prop">href</span> = authUrl;
+}
+        </div>
+
+        <!-- Footer -->
+        <div class="footer-bar">
+          <div>Standard: <strong>OAuth 2.0 PKCE (RFC 7636)</strong></div>
+          <div>Browser Safety: <strong>Zero Client Secret in Source Code</strong></div>
+          <div>worldgyan.com · Ashutosh Kumar Choubey</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>
+

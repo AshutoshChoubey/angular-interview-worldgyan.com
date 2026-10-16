@@ -1,0 +1,502 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Angular HTTP Interceptors: Request & Response Pipeline (1080x1080 macOS Animation)</title>
+  <style>
+    :root {
+      --bg-outer: #060a14;
+      --slate-bg: #0f172a;
+      --slate-deep: #090e1c;
+      --slate-card: #111c33;
+      --slate-border: #1e293b;
+      --slate-muted: #64748b;
+      --text-main: #f8fafc;
+      --text-secondary: #94a3b8;
+      --cyan: #38bdf8;
+      --emerald: #34d399;
+      --purple: #a855f7;
+      --amber: #fbbf24;
+      --rose: #f43f5e;
+      --red-dot: #ff5f56;
+      --yellow-dot: #ffbd2e;
+      --green-dot: #27c93f;
+      --font-sans: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', Roboto, sans-serif;
+      --font-mono: 'JetBrains Mono', 'Fira Code', Consolas, monospace;
+      --loop: 8s;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html, body {
+      width: 100%;
+      height: 100%;
+      background: var(--bg-outer);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: var(--font-sans);
+      color: var(--text-main);
+      overflow: hidden;
+    }
+
+    .stage-1080 {
+      width: 1080px;
+      height: 1080px;
+      min-width: 1080px;
+      min-height: 1080px;
+      background:
+        radial-gradient(circle at 15% 20%, rgba(56, 189, 248, 0.15) 0%, transparent 45%),
+        radial-gradient(circle at 85% 80%, rgba(168, 85, 247, 0.15) 0%, transparent 45%),
+        var(--slate-bg);
+      padding: 40px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+    }
+
+    .stage-1080::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background-image:
+        linear-gradient(to right, rgba(56, 189, 248, 0.04) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(56, 189, 248, 0.04) 1px, transparent 1px);
+      background-size: 36px 36px;
+      pointer-events: none;
+    }
+
+    .macos-window {
+      width: 1000px;
+      height: 1000px;
+      background: rgba(9, 14, 28, 0.96);
+      border: 1px solid rgba(56, 189, 248, 0.28);
+      border-radius: 20px;
+      box-shadow: 0 32px 80px rgba(0, 0, 0, 0.8), 0 0 40px rgba(56, 189, 248, 0.12);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      position: relative;
+      z-index: 2;
+    }
+
+    .window-titlebar {
+      height: 52px;
+      background: #0d1527;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 20px;
+    }
+
+    .window-dots {
+      display: flex;
+      gap: 8px;
+    }
+    .window-dot { width: 12px; height: 12px; border-radius: 50%; }
+    .window-dot.red { background: var(--red-dot); }
+    .window-dot.yellow { background: var(--yellow-dot); }
+    .window-dot.green { background: var(--green-dot); }
+
+    .window-title {
+      font-family: var(--font-mono);
+      font-size: 15px;
+      font-weight: 700;
+      color: #94a3b8;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .window-title .badge {
+      background: rgba(56, 189, 248, 0.16);
+      color: var(--cyan);
+      border: 1px solid rgba(56, 189, 248, 0.35);
+      padding: 3px 10px;
+      border-radius: 5px;
+      font-size: 12.5px;
+    }
+
+    .window-author {
+      font-family: var(--font-mono);
+      font-size: 13px;
+      color: #94a3b8;
+    }
+
+    .window-content {
+      flex: 1;
+      padding: 24px 30px 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+    }
+
+    /* Header Bar */
+    .hero-strip {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.09);
+      padding-bottom: 14px;
+    }
+    .hero-strip h1 {
+      font-size: 26px;
+      font-weight: 800;
+      color: #ffffff;
+      letter-spacing: -0.02em;
+    }
+    .hero-strip h1 span {
+      color: var(--cyan);
+    }
+    .hero-pills {
+      display: flex;
+      gap: 8px;
+    }
+    .pill {
+      font-family: var(--font-mono);
+      font-size: 13px;
+      font-weight: 700;
+      padding: 5px 12px;
+      border-radius: 6px;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    .pill-cyan { background: rgba(56, 189, 248, 0.16); color: var(--cyan); border: 1px solid rgba(56, 189, 248, 0.35); }
+    .pill-emerald { background: rgba(52, 211, 153, 0.16); color: var(--emerald); border: 1px solid rgba(52, 211, 153, 0.35); }
+    .pill-purple { background: rgba(168, 85, 247, 0.16); color: var(--purple); border: 1px solid rgba(168, 85, 247, 0.35); }
+
+    /* Pipeline Flow Architecture */
+    .pipeline-stage {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      gap: 14px;
+      background: #080d1a;
+      border: 1px solid var(--slate-border);
+      border-radius: 14px;
+      padding: 18px 20px;
+      position: relative;
+    }
+
+    /* Outbound Request Pipeline */
+    .lane-label {
+      font-family: var(--font-mono);
+      font-size: 14.5px;
+      font-weight: 800;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+    }
+    .lane-label.outbound { color: var(--cyan); }
+    .lane-label.inbound { color: var(--emerald); }
+
+    .pipeline-row {
+      display: grid;
+      grid-template-columns: 140px 32px 180px 32px 180px 32px 140px;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .node-box {
+      background: var(--slate-card);
+      border: 1px solid var(--slate-border);
+      border-radius: 10px;
+      padding: 12px 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      position: relative;
+      transition: all 0.3s ease;
+    }
+
+    .node-box.active-pulse {
+      animation: nodeGlow var(--loop) infinite ease-in-out;
+    }
+
+    .node-box .node-badge {
+      font-family: var(--font-mono);
+      font-size: 11.5px;
+      font-weight: 800;
+      color: #94a3b8;
+      text-transform: uppercase;
+    }
+    .node-box h3 {
+      font-size: 15.5px;
+      font-weight: 800;
+      color: #f8fafc;
+    }
+    .node-box p {
+      font-size: 13px;
+      color: #94a3b8;
+      font-family: var(--font-mono);
+    }
+
+    .node-box.cyan-tint { border-color: rgba(56, 189, 248, 0.4); background: rgba(56, 189, 248, 0.06); }
+    .node-box.purple-tint { border-color: rgba(168, 85, 247, 0.4); background: rgba(168, 85, 247, 0.06); }
+    .node-box.emerald-tint { border-color: rgba(52, 211, 153, 0.4); background: rgba(52, 211, 153, 0.06); }
+    .node-box.amber-tint { border-color: rgba(251, 191, 36, 0.4); background: rgba(251, 191, 36, 0.06); }
+    .node-box.rose-tint { border-color: rgba(244, 63, 94, 0.4); background: rgba(244, 63, 94, 0.06); }
+
+    .arrow-divider {
+      text-align: center;
+      font-size: 16px;
+      color: var(--slate-muted);
+      position: relative;
+    }
+    .arrow-divider.active-arrow {
+      color: var(--cyan);
+      animation: arrowPulse var(--loop) infinite;
+    }
+
+    /* Central Server Divider */
+    .server-hub {
+      background: linear-gradient(135deg, rgba(30, 41, 59, 0.7), rgba(15, 23, 42, 0.9));
+      border: 1px solid rgba(56, 189, 248, 0.25);
+      border-radius: 12px;
+      padding: 12px 18px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .server-status {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .status-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: var(--emerald);
+      box-shadow: 0 0 10px var(--emerald);
+      animation: blink 2s infinite ease-in-out;
+    }
+    .server-meta {
+      font-family: var(--font-mono);
+      font-size: 14px;
+      color: #e2e8f0;
+    }
+    .server-meta code {
+      color: var(--cyan);
+    }
+    .network-badge {
+      font-family: var(--font-mono);
+      font-size: 13px;
+      background: rgba(56, 189, 248, 0.12);
+      color: var(--cyan);
+      border: 1px solid rgba(56, 189, 248, 0.3);
+      padding: 4px 10px;
+      border-radius: 5px;
+    }
+
+    /* Code & Architecture Showcase */
+    .code-preview-pane {
+      background: #060a14;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 12px;
+      padding: 14px 18px;
+      font-family: var(--font-mono);
+      font-size: 14px;
+      line-height: 1.55;
+      color: #e2e8f0;
+    }
+    .code-preview-pane .kw { color: #f43f5e; font-weight: 700; }
+    .code-preview-pane .fn { color: #38bdf8; font-weight: 700; }
+    .code-preview-pane .str { color: #34d399; }
+    .code-preview-pane .prop { color: #c084fc; }
+    .code-preview-pane .comment { color: #64748b; font-style: italic; }
+
+    /* Footer Stats */
+    .footer-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-family: var(--font-mono);
+      font-size: 13px;
+      color: #94a3b8;
+      padding-top: 10px;
+      border-top: 1px solid rgba(255, 255, 255, 0.06);
+    }
+    .footer-left {
+      display: flex;
+      gap: 16px;
+    }
+    .footer-left strong {
+      color: #94a3b8;
+    }
+
+    /* Keyframes */
+    @keyframes nodeGlow {
+      0%, 100% { transform: translateY(0); box-shadow: none; }
+      15% { transform: translateY(-3px); box-shadow: 0 0 18px rgba(56, 189, 248, 0.35); }
+      35% { transform: translateY(0); box-shadow: none; }
+    }
+
+    @keyframes arrowPulse {
+      0%, 100% { opacity: 0.4; }
+      20% { opacity: 1; transform: scale(1.15); }
+      40% { opacity: 0.4; transform: scale(1); }
+    }
+
+    @keyframes blink {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.4; }
+    }
+  </style>
+</head>
+<body>
+  <div class="stage-1080">
+    <div class="macos-window">
+      <!-- Titlebar -->
+      <div class="window-titlebar">
+        <div class="window-dots">
+          <span class="window-dot red"></span>
+          <span class="window-dot yellow"></span>
+          <span class="window-dot green"></span>
+        </div>
+        <div class="window-title">
+          <span>Angular 22 Architecture</span>
+          <span class="badge">HttpInterceptorFn Pipeline</span>
+        </div>
+        <div class="window-author">worldgyan.com · Ashutosh Kumar Choubey</div>
+      </div>
+
+      <!-- Main Content -->
+      <div class="window-content">
+        <!-- Hero Header -->
+        <div class="hero-strip">
+          <h1>HTTP Interceptors: <span>Onion Pipeline</span></h1>
+          <div class="hero-pills">
+            <span class="pill pill-cyan">provideHttpClient</span>
+            <span class="pill pill-emerald">withInterceptors</span>
+            <span class="pill pill-purple">Functional v22</span>
+          </div>
+        </div>
+
+        <!-- Pipeline Visual Stage -->
+        <div class="pipeline-stage">
+          <!-- Lane 1: Outbound Request (Top) -->
+          <div>
+            <div class="lane-label outbound">
+              <span>➔ Outbound Request Pipeline (Left to Right)</span>
+            </div>
+            <div class="pipeline-row" style="margin-top: 10px;">
+              <div class="node-box cyan-tint active-pulse">
+                <span class="node-badge">Step 01</span>
+                <h3>AppComponent</h3>
+                <p>httpClient.get()</p>
+              </div>
+
+              <div class="arrow-divider active-arrow">➔</div>
+
+              <div class="node-box purple-tint">
+                <span class="node-badge">Step 02 · Header</span>
+                <h3>authInterceptor</h3>
+                <p>Bearer &lt;JWT&gt;</p>
+              </div>
+
+              <div class="arrow-divider">➔</div>
+
+              <div class="node-box emerald-tint">
+                <span class="node-badge">Step 03 · Metric</span>
+                <h3>timingInterceptor</h3>
+                <p>reqTime = now()</p>
+              </div>
+
+              <div class="arrow-divider">➔</div>
+
+              <div class="node-box amber-tint">
+                <span class="node-badge">Step 04 · Cache</span>
+                <h3>cacheInterceptor</h3>
+                <p>GET Cache Check</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Central Server Network Gate -->
+          <div class="server-hub">
+            <div class="server-status">
+              <span class="status-dot"></span>
+              <div class="server-meta">
+                <strong>API Gateway:</strong> <code>https://api.worldgyan.com/v1/user</code> · <span>HTTP/2 Wire</span>
+              </div>
+            </div>
+            <span class="network-badge">Bearer Token Injected · 128ms Roundtrip</span>
+          </div>
+
+          <!-- Lane 2: Inbound Response (Bottom) -->
+          <div>
+            <div class="lane-label inbound">
+              <span>⬅ Inbound Response Pipeline (Right to Left)</span>
+            </div>
+            <div class="pipeline-row" style="margin-top: 10px;">
+              <div class="node-box emerald-tint">
+                <span class="node-badge">Step 08 · State</span>
+                <h3>Component View</h3>
+                <p>Signal O(1) Refresh</p>
+              </div>
+
+              <div class="arrow-divider">⬅</div>
+
+              <div class="node-box rose-tint">
+                <span class="node-badge">Step 07 · Guard</span>
+                <h3>errorInterceptor</h3>
+                <p>401 Refresh / Retry</p>
+              </div>
+
+              <div class="arrow-divider">⬅</div>
+
+              <div class="node-box purple-tint">
+                <span class="node-badge">Step 06 · Metric</span>
+                <h3>logInterceptor</h3>
+                <p>Latency: 128ms</p>
+              </div>
+
+              <div class="arrow-divider">⬅</div>
+
+              <div class="node-box amber-tint">
+                <span class="node-badge">Step 05 · Payload</span>
+                <h3>Network Wire</h3>
+                <p>HTTP 200 / JSON</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Functional Code Configuration -->
+        <div class="code-preview-pane">
+<span class="comment">// app.config.ts — Angular 22 Functional Interceptor Pipeline</span>
+<span class="kw">export const</span> <span class="prop">appConfig</span>: <span class="prop">ApplicationConfig</span> = {
+  <span class="prop">providers</span>: [
+    <span class="fn">provideHttpClient</span>(
+      <span class="fn">withInterceptors</span>([
+        <span class="prop">authInterceptor</span>,        <span class="comment">// 1. Attach Bearer token</span>
+        <span class="prop">refreshTokenInterceptor</span>,<span class="comment">// 2. Catch 401 &amp; replay</span>
+        <span class="prop">timingInterceptor</span>,      <span class="comment">// 3. Performance metric</span>
+        <span class="prop">errorInterceptor</span>        <span class="comment">// 4. Global error handler</span>
+      ])
+    )
+  ]
+};
+        </div>
+
+        <!-- Footer -->
+        <div class="footer-bar">
+          <div class="footer-left">
+            <span>Pattern: <strong>HttpInterceptorFn</strong></span>
+            <span>Registration: <strong>withInterceptors()</strong></span>
+            <span>Execution: <strong>Onion Chain (LIFO Response)</strong></span>
+          </div>
+          <div>worldgyan.com · Ashutosh Kumar Choubey</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>
+

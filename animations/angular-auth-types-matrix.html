@@ -1,0 +1,401 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Angular Authentication Architecture Matrix (1080x1080 macOS Animation)</title>
+  <style>
+    :root {
+      --bg-outer: #060a14;
+      --slate-bg: #0f172a;
+      --slate-deep: #090e1c;
+      --slate-card: #111c33;
+      --slate-border: #1e293b;
+      --slate-muted: #64748b;
+      --text-main: #f8fafc;
+      --text-secondary: #94a3b8;
+      --cyan: #38bdf8;
+      --emerald: #34d399;
+      --purple: #a855f7;
+      --amber: #fbbf24;
+      --rose: #f43f5e;
+      --red-dot: #ff5f56;
+      --yellow-dot: #ffbd2e;
+      --green-dot: #27c93f;
+      --font-sans: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', Roboto, sans-serif;
+      --font-mono: 'JetBrains Mono', 'Fira Code', Consolas, monospace;
+      --loop: 8s;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html, body {
+      width: 100%;
+      height: 100%;
+      background: var(--bg-outer);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: var(--font-sans);
+      color: var(--text-main);
+      overflow: hidden;
+    }
+
+    .stage-1080 {
+      width: 1080px;
+      height: 1080px;
+      min-width: 1080px;
+      min-height: 1080px;
+      background:
+        radial-gradient(circle at 15% 20%, rgba(52, 211, 153, 0.12) 0%, transparent 45%),
+        radial-gradient(circle at 85% 80%, rgba(56, 189, 248, 0.15) 0%, transparent 45%),
+        var(--slate-bg);
+      padding: 40px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+    }
+
+    .stage-1080::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background-image:
+        linear-gradient(to right, rgba(56, 189, 248, 0.04) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(56, 189, 248, 0.04) 1px, transparent 1px);
+      background-size: 36px 36px;
+      pointer-events: none;
+    }
+
+    .macos-window {
+      width: 1000px;
+      height: 1000px;
+      background: rgba(9, 14, 28, 0.96);
+      border: 1px solid rgba(52, 211, 153, 0.3);
+      border-radius: 20px;
+      box-shadow: 0 32px 80px rgba(0, 0, 0, 0.8), 0 0 40px rgba(52, 211, 153, 0.1);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      position: relative;
+      z-index: 2;
+    }
+
+    .window-titlebar {
+      height: 52px;
+      background: #0d1527;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 20px;
+    }
+
+    .window-dots {
+      display: flex;
+      gap: 8px;
+    }
+    .window-dot { width: 12px; height: 12px; border-radius: 50%; }
+    .window-dot.red { background: var(--red-dot); }
+    .window-dot.yellow { background: var(--yellow-dot); }
+    .window-dot.green { background: var(--green-dot); }
+
+    .window-title {
+      font-family: var(--font-mono);
+      font-size: 15px;
+      font-weight: 700;
+      color: #94a3b8;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .window-title .badge {
+      background: rgba(52, 211, 153, 0.14);
+      color: var(--emerald);
+      border: 1px solid rgba(52, 211, 153, 0.3);
+      padding: 3px 10px;
+      border-radius: 5px;
+      font-size: 12.5px;
+    }
+
+    .window-author {
+      font-family: var(--font-mono);
+      font-size: 13px;
+      color: #94a3b8;
+    }
+
+    .window-content {
+      flex: 1;
+      padding: 26px 32px 22px;
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+    }
+
+    /* Hero Strip */
+    .hero-strip {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+      padding-bottom: 14px;
+    }
+    .hero-strip h1 {
+      font-size: 26px;
+      font-weight: 800;
+      color: #ffffff;
+      letter-spacing: -0.02em;
+    }
+    .hero-strip h1 span {
+      color: var(--emerald);
+    }
+    .hero-pills {
+      display: flex;
+      gap: 8px;
+    }
+    .pill {
+      font-family: var(--font-mono);
+      font-size: 13px;
+      font-weight: 700;
+      padding: 5px 12px;
+      border-radius: 6px;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    .pill-emerald { background: rgba(52, 211, 153, 0.14); color: var(--emerald); border: 1px solid rgba(52, 211, 153, 0.3); }
+    .pill-cyan { background: rgba(56, 189, 248, 0.14); color: var(--cyan); border: 1px solid rgba(56, 189, 248, 0.3); }
+    .pill-purple { background: rgba(168, 85, 247, 0.14); color: var(--purple); border: 1px solid rgba(168, 85, 247, 0.3); }
+
+    /* 4 Auth Strategy Cards */
+    .matrix-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+      flex: 1;
+    }
+
+    .matrix-card {
+      background: var(--slate-card);
+      border: 1px solid var(--slate-border);
+      border-radius: 12px;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      gap: 10px;
+      position: relative;
+    }
+
+    .card-top {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 8px;
+    }
+    .card-title-group h3 {
+      font-size: 18px;
+      font-weight: 800;
+      color: #f8fafc;
+      margin-bottom: 2px;
+    }
+    .card-title-group .sub {
+      font-family: var(--font-mono);
+      font-size: 13px;
+      color: #94a3b8;
+    }
+
+    .sec-badge {
+      font-family: var(--font-mono);
+      font-size: 12px;
+      font-weight: 800;
+      padding: 4px 9px;
+      border-radius: 5px;
+      text-transform: uppercase;
+    }
+    .sec-high { background: rgba(52, 211, 153, 0.16); color: var(--emerald); border: 1px solid rgba(52, 211, 153, 0.35); }
+    .sec-max { background: rgba(168, 85, 247, 0.16); color: var(--purple); border: 1px solid rgba(168, 85, 247, 0.35); }
+    .sec-med { background: rgba(56, 189, 248, 0.16); color: var(--cyan); border: 1px solid rgba(56, 189, 248, 0.35); }
+
+    .attr-list {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      font-size: 13.5px;
+      color: #cbd5e1;
+      line-height: 1.45;
+    }
+    .attr-item {
+      display: flex;
+      justify-content: space-between;
+      border-bottom: 1px dashed rgba(255, 255, 255, 0.06);
+      padding-bottom: 4px;
+    }
+    .attr-item strong {
+      color: #94a3b8;
+      font-weight: 600;
+    }
+    .attr-item span {
+      font-family: var(--font-mono);
+      font-size: 13px;
+      color: #f8fafc;
+    }
+
+    .angular-hook {
+      background: #090e1a;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 6px;
+      padding: 9px 12px;
+      font-family: var(--font-mono);
+      font-size: 12.5px;
+      color: var(--cyan);
+    }
+    .angular-hook .lbl {
+      color: #94a3b8;
+      display: block;
+      font-size: 11px;
+      text-transform: uppercase;
+      font-weight: 800;
+      margin-bottom: 3px;
+    }
+
+    /* Footer */
+    .footer-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-family: var(--font-mono);
+      font-size: 13px;
+      color: #94a3b8;
+      padding-top: 10px;
+      border-top: 1px solid rgba(255, 255, 255, 0.06);
+    }
+  </style>
+</head>
+<body>
+  <div class="stage-1080">
+    <div class="macos-window">
+      <!-- Titlebar -->
+      <div class="window-titlebar">
+        <div class="window-dots">
+          <span class="window-dot red"></span>
+          <span class="window-dot yellow"></span>
+          <span class="window-dot green"></span>
+        </div>
+        <div class="window-title">
+          <span>Enterprise Architecture</span>
+          <span class="badge">Authentication Matrix</span>
+        </div>
+        <div class="window-author">worldgyan.com · Ashutosh Kumar Choubey</div>
+      </div>
+
+      <!-- Main Content -->
+      <div class="window-content">
+        <!-- Hero Header -->
+        <div class="hero-strip">
+          <h1>Authentication Architecture: <span>Decision Matrix</span></h1>
+          <div class="hero-pills">
+            <span class="pill pill-emerald">4 Core Models</span>
+            <span class="pill pill-cyan">Zero XSS</span>
+            <span class="pill pill-purple">Signals Ready</span>
+          </div>
+        </div>
+
+        <!-- 4 Strategy Cards -->
+        <div class="matrix-grid">
+          <!-- 1. JWT Bearer Tokens -->
+          <div class="matrix-card" style="border-color: rgba(56, 189, 248, 0.35);">
+            <div class="card-top">
+              <div class="card-title-group">
+                <h3>1. JWT Bearer Token</h3>
+                <span class="sub">Stateless Microservices</span>
+              </div>
+              <span class="sec-badge sec-med">Stateless</span>
+            </div>
+            <div class="attr-list">
+              <div class="attr-item"><strong>Token Storage:</strong> <span>In-Memory Signal / Closure</span></div>
+              <div class="attr-item"><strong>XSS Resilience:</strong> <span>Immune if kept out of LocalStorage</span></div>
+              <div class="attr-item"><strong>CSRF Resilience:</strong> <span>100% Immune (Custom Header)</span></div>
+              <div class="attr-item"><strong>Best For:</strong> <span>Distributed APIs &amp; Mobile</span></div>
+            </div>
+            <div class="angular-hook">
+              <span class="lbl">Angular 22 Integration</span>
+              req.clone({ setHeaders: { Authorization: `Bearer ${token}` } })
+            </div>
+          </div>
+
+          <!-- 2. OAuth 2.0 PKCE -->
+          <div class="matrix-card" style="border-color: rgba(168, 85, 247, 0.35);">
+            <div class="card-top">
+              <div class="card-title-group">
+                <h3>2. OAuth 2.0 + OIDC (PKCE)</h3>
+                <span class="sub">Delegated Identity Providers</span>
+              </div>
+              <span class="sec-badge sec-max">Max Security</span>
+            </div>
+            <div class="attr-list">
+              <div class="attr-item"><strong>Identity Providers:</strong> <span>Auth0, Okta, Keycloak, Google</span></div>
+              <div class="attr-item"><strong>Secret Exposure:</strong> <span>Zero Secret in SPA Code</span></div>
+              <div class="attr-item"><strong>Token Types:</strong> <span>ID Token + Access + Refresh</span></div>
+              <div class="attr-item"><strong>Best For:</strong> <span>Enterprise SSO &amp; B2B Portals</span></div>
+            </div>
+            <div class="angular-hook">
+              <span class="lbl">Angular 22 Integration</span>
+              provideOAuthClient() + canActivate: [oauthGuard]
+            </div>
+          </div>
+
+          <!-- 3. HttpOnly Session Cookies -->
+          <div class="matrix-card" style="border-color: rgba(52, 211, 153, 0.35);">
+            <div class="card-top">
+              <div class="card-title-group">
+                <h3>3. HttpOnly Cookie Sessions</h3>
+                <span class="sub">BFF / Monolithic Same-Origin</span>
+              </div>
+              <span class="sec-badge sec-high">XSS Immune</span>
+            </div>
+            <div class="attr-list">
+              <div class="attr-item"><strong>Token Storage:</strong> <span>Browser Cookie Jar (HttpOnly)</span></div>
+              <div class="attr-item"><strong>XSS Resilience:</strong> <span>JavaScript CANNOT read cookie!</span></div>
+              <div class="attr-item"><strong>CSRF Defense:</strong> <span>SameSite=Strict + X-XSRF-TOKEN</span></div>
+              <div class="attr-item"><strong>Best For:</strong> <span>BFF Architectures &amp; Banking</span></div>
+            </div>
+            <div class="angular-hook">
+              <span class="lbl">Angular 22 Integration</span>
+              provideHttpClient(withXsrfConfiguration({ ... }))
+            </div>
+          </div>
+
+          <!-- 4. Silent Refresh Token -->
+          <div class="matrix-card" style="border-color: rgba(251, 191, 36, 0.35);">
+            <div class="card-top">
+              <div class="card-title-group">
+                <h3>4. Silent Refresh Mutex</h3>
+                <span class="sub">Seamless Session Rotation</span>
+              </div>
+              <span class="sec-badge sec-med">Zero Logout</span>
+            </div>
+            <div class="attr-list">
+              <div class="attr-item"><strong>Access Token TTL:</strong> <span>5–15 Minutes (Short-lived)</span></div>
+              <div class="attr-item"><strong>Refresh Token TTL:</strong> <span>7–30 Days (Rotated on use)</span></div>
+              <div class="attr-item"><strong>401 Resolution:</strong> <span>switchMap Queue + Auto-Replay</span></div>
+              <div class="attr-item"><strong>Best For:</strong> <span>SaaS Apps with Long User Sessions</span></div>
+            </div>
+            <div class="angular-hook">
+              <span class="lbl">Angular 22 Integration</span>
+              refreshTokenInterceptor with catchError + retry queue
+            </div>
+          </div>
+        </div>
+
+        <!-- Footer -->
+        <div class="footer-bar">
+          <div>Architecture Recommendation: <strong>BFF with HttpOnly Cookies OR In-Memory JWT + PKCE</strong></div>
+          <div>worldgyan.com · Ashutosh Kumar Choubey</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>
+

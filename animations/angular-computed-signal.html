@@ -1,0 +1,1237 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Angular Computed Signal Dependency Graph — 1080x1080 macOS Animation</title>
+  <style>
+    :root {
+      --bg-outer: #060a14;
+      --slate-bg: #0f172a;
+      --slate-deep: #090e1c;
+      --slate-card: #111c33;
+      --slate-border: #1e293b;
+      --slate-muted: #64748b;
+      --text-main: #f8fafc;
+      --text-secondary: #94a3b8;
+      --cyan: #06b6d4;
+      --cyan-bright: #38bdf8;
+      --cyan-neon: #67e8f9;
+      --emerald: #10b981;
+      --emerald-bright: #34d399;
+      --red-dot: #ff5f56;
+      --yellow-dot: #ffbd2e;
+      --green-dot: #27c93f;
+      --font-sans: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', Roboto, Helvetica, sans-serif;
+      --font-mono: 'JetBrains Mono', 'Fira Code', 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+      --loop: 8s;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    html, body {
+      width: 100%;
+      min-height: 100vh;
+      background: var(--bg-outer);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: var(--font-sans);
+      color: var(--text-main);
+      overflow-x: hidden;
+    }
+
+    /* 1080x1080 Square Stage */
+    .stage-1080 {
+      width: 1080px;
+      height: 1080px;
+      min-width: 1080px;
+      min-height: 1080px;
+      background:
+        radial-gradient(circle at 22% 35%, rgba(56, 189, 248, 0.14) 0%, transparent 45%),
+        radial-gradient(circle at 75% 58%, rgba(16, 185, 129, 0.12) 0%, transparent 48%),
+        var(--slate-bg);
+      padding: 40px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      overflow: hidden;
+      border: 1px solid rgba(255, 255, 255, 0.07);
+      box-shadow: 0 32px 96px rgba(0, 0, 0, 0.8);
+    }
+
+    /* Subtle Circuit Grid Pattern on 1080x1080 Stage */
+    .stage-1080::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background-image:
+        linear-gradient(to right, rgba(56, 189, 248, 0.045) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(56, 189, 248, 0.045) 1px, transparent 1px);
+      background-size: 36px 36px;
+      pointer-events: none;
+    }
+
+    /* Dark-Mode macOS Browser Window */
+    .macos-window {
+      width: 1000px;
+      height: 1000px;
+      background: var(--slate-bg);
+      border: 1px solid rgba(148, 163, 184, 0.22);
+      border-radius: 20px;
+      box-shadow:
+        0 35px 90px rgba(2, 6, 23, 0.9),
+        0 0 0 1px rgba(255, 255, 255, 0.05) inset;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      position: relative;
+      z-index: 2;
+    }
+
+    /* macOS Window Titlebar */
+    .window-titlebar {
+      height: 56px;
+      background: linear-gradient(180deg, #131d36 0%, #0b1121 100%);
+      border-bottom: 1px solid var(--slate-border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 22px;
+      user-select: none;
+      flex-shrink: 0;
+    }
+
+    .window-dots {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      width: 150px;
+    }
+
+    .w-dot {
+      width: 13px;
+      height: 13px;
+      border-radius: 50%;
+      display: inline-block;
+      box-shadow: inset 0 1px 2px rgba(255, 255, 255, 0.35);
+    }
+
+    .w-dot.red { background: var(--red-dot); }
+    .w-dot.yellow { background: var(--yellow-dot); }
+    .w-dot.green { background: var(--green-dot); }
+
+    .address-bar {
+      flex: 1;
+      max-width: 530px;
+      height: 34px;
+      background: #070c18;
+      border: 1px solid var(--slate-border);
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      font-family: var(--font-mono);
+      font-size: 12.5px;
+      color: var(--text-secondary);
+      padding: 0 14px;
+    }
+
+    .address-bar .protocol {
+      color: var(--cyan-bright);
+    }
+
+    .address-bar .domain {
+      color: var(--text-main);
+      font-weight: 600;
+    }
+
+    .address-bar .route {
+      color: var(--emerald-bright);
+    }
+
+    .window-meta {
+      width: 150px;
+      display: flex;
+      justify-content: flex-end;
+    }
+
+    .loop-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      font-family: var(--font-mono);
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--cyan-neon);
+      background: rgba(6, 182, 212, 0.14);
+      border: 1px solid rgba(56, 189, 248, 0.38);
+      padding: 4px 11px;
+      border-radius: 999px;
+      letter-spacing: 0.04em;
+    }
+
+    .loop-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: var(--cyan-neon);
+      box-shadow: 0 0 8px var(--cyan-bright);
+      animation: dotBlink 1.6s infinite ease-in-out;
+    }
+
+    /* Main Window Body */
+    .window-content {
+      flex: 1;
+      padding: 24px 28px 22px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      gap: 18px;
+      background:
+        radial-gradient(circle at 20% 48%, rgba(6, 182, 212, 0.09) 0%, transparent 42%),
+        radial-gradient(circle at 62% 48%, rgba(16, 185, 129, 0.08) 0%, transparent 45%),
+        var(--slate-bg);
+      position: relative;
+    }
+
+    /* Top Header & Live Code Ribbon */
+    .top-bar {
+      display: grid;
+      grid-template-columns: 340px 1fr;
+      gap: 18px;
+      align-items: stretch;
+    }
+
+    .title-card {
+      background: linear-gradient(145deg, #131f38 0%, #0b1324 100%);
+      border: 1px solid var(--slate-border);
+      border-radius: 14px;
+      padding: 16px 20px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+    }
+
+    .title-eyebrow {
+      font-family: var(--font-mono);
+      font-size: 10.5px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      color: var(--cyan-bright);
+      margin-bottom: 5px;
+    }
+
+    .title-card h1 {
+      font-size: 20px;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      color: #ffffff;
+      line-height: 1.22;
+    }
+
+    .code-ribbon {
+      background: #080d1a;
+      border: 1px solid var(--slate-border);
+      border-radius: 14px;
+      padding: 12px 18px;
+      font-family: var(--font-mono);
+      font-size: 12.5px;
+      line-height: 1.65;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .code-ribbon-line {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 2px 8px;
+      border-radius: 6px;
+      border-left: 3px solid transparent;
+    }
+
+    .code-ribbon-line.active-mutation {
+      animation: codeCyanFlash var(--loop) infinite;
+    }
+
+    .code-ribbon-line.active-computed {
+      animation: codeEmeraldFlash var(--loop) infinite;
+    }
+
+    .kw { color: #c084fc; font-weight: 600; }
+    .fn { color: #38bdf8; }
+    .str { color: #fcd34d; }
+    .id { color: #e2e8f0; }
+    .cm { color: #64748b; }
+
+    .mutation-badge {
+      margin-left: auto;
+      font-size: 10.5px;
+      font-weight: 700;
+      padding: 1px 8px;
+      border-radius: 999px;
+      background: rgba(6, 182, 212, 0.2);
+      border: 1px solid var(--cyan-bright);
+      color: var(--cyan-neon);
+      animation: mutationBadgePulse var(--loop) infinite;
+    }
+
+    /* =========================================================================
+       MAIN SVG CIRCUIT GRAPH STAGE (3 INTERCONNECTED SVG NODES + DOM TREE)
+       ========================================================================= */
+    .circuit-stage {
+      position: relative;
+      height: 676px;
+      background:
+        radial-gradient(circle at 50% 50%, rgba(15, 23, 42, 0.4) 0%, rgba(7, 12, 24, 0.94) 100%);
+      border: 1px solid #1e293b;
+      border-radius: 18px;
+      overflow: hidden;
+      box-shadow: inset 0 0 60px rgba(2, 6, 23, 0.85);
+    }
+
+    .circuit-svg {
+      width: 944px;
+      height: 676px;
+      display: block;
+    }
+
+    /* Base Circuit Traces */
+    .trace-bg {
+      fill: none;
+      stroke: #1e293b;
+      stroke-width: 4.5;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
+    .trace-guide {
+      fill: none;
+      stroke: rgba(56, 189, 248, 0.2);
+      stroke-width: 2;
+      stroke-dasharray: 6 6;
+    }
+
+    .trace-cached {
+      fill: none;
+      stroke: rgba(100, 116, 139, 0.48);
+      stroke-width: 2.5;
+      stroke-dasharray: 5 5;
+    }
+
+    .trace-untouched {
+      fill: none;
+      stroke: rgba(71, 85, 105, 0.3);
+      stroke-width: 2;
+      stroke-dasharray: 4 6;
+    }
+
+    /* Active Glowing Cyan Trace: Node A -> Node C */
+    .trace-active-ac {
+      fill: none;
+      stroke: url(#cyanCircuitGrad);
+      stroke-width: 4.5;
+      stroke-linecap: round;
+      stroke-dasharray: 340;
+      stroke-dashoffset: 340;
+      filter: drop-shadow(0 0 10px rgba(56, 189, 248, 0.95));
+      animation: traceFlowAC var(--loop) infinite;
+    }
+
+    /* Active Glowing Emerald/Cyan Trace: Node C -> Targeted DOM Node */
+    .trace-active-cdom {
+      fill: none;
+      stroke: url(#emeraldCircuitGrad);
+      stroke-width: 4.5;
+      stroke-linecap: round;
+      stroke-dasharray: 260;
+      stroke-dashoffset: 260;
+      filter: drop-shadow(0 0 10px rgba(16, 185, 129, 0.95));
+      animation: traceFlowCDOM var(--loop) infinite;
+    }
+
+    /* Expanding Cyan Pulse Rings around SVG Node A */
+    .node-a-pulse-ring {
+      fill: none;
+      stroke: var(--cyan-bright);
+      stroke-width: 2.5;
+      transform-box: fill-box;
+      transform-origin: center;
+      animation: cyanShockwave var(--loop) infinite;
+    }
+
+    .node-a-pulse-ring.ring-2 {
+      animation-delay: 0.18s;
+    }
+
+    /* Expanding Emerald Pulse Ring around SVG Node C */
+    .node-c-pulse-ring {
+      fill: none;
+      stroke: var(--emerald-bright);
+      stroke-width: 2.5;
+      transform-box: fill-box;
+      transform-origin: center;
+      animation: emeraldShockwave var(--loop) infinite;
+    }
+
+    /* Animated Glowing Particle Groups */
+    .particle-ac-group {
+      animation: particleACVisibility var(--loop) infinite;
+    }
+
+    .particle-cdom-group {
+      animation: particleCDOMVisibility var(--loop) infinite;
+    }
+
+    /* SVG Node Containers */
+    .svg-node-a-frame {
+      fill: url(#nodeCardGrad);
+      stroke: #263554;
+      stroke-width: 1.8;
+      animation: svgNodeACyanGlow var(--loop) infinite;
+    }
+
+    .svg-node-b-frame {
+      fill: url(#nodeCardGrad);
+      stroke: #1e293b;
+      stroke-width: 1.5;
+    }
+
+    .svg-node-c-frame {
+      fill: url(#nodeCardGrad);
+      stroke: #263554;
+      stroke-width: 1.8;
+      animation: svgNodeCEmeraldGlow var(--loop) infinite;
+    }
+
+    .svg-dom-target-frame {
+      fill: url(#nodeCardGrad);
+      stroke: #263554;
+      stroke-width: 1.8;
+      animation: svgDomTargetGlow var(--loop) infinite;
+    }
+
+    .svg-dom-untouched-frame {
+      fill: #080d19;
+      stroke: #1e293b;
+      stroke-width: 1.2;
+      opacity: 0.72;
+    }
+
+    /* Value Swap Animations inside SVG Nodes */
+    .val-ada {
+      animation: adaOut var(--loop) infinite;
+    }
+
+    .val-grace {
+      animation: graceIn var(--loop) infinite;
+    }
+
+    .val-full-ada {
+      animation: fullAdaOut var(--loop) infinite;
+    }
+
+    .val-full-grace {
+      animation: fullGraceIn var(--loop) infinite;
+    }
+
+    /* =========================================================================
+       BOTTOM TIMELINE & TELEMETRY FOOTER
+       ========================================================================= */
+    .timeline-bar {
+      background: #090f1e;
+      border: 1px solid var(--slate-border);
+      border-radius: 14px;
+      padding: 12px 18px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .timeline-phases {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
+      font-family: var(--font-mono);
+      font-size: 11px;
+      color: var(--text-secondary);
+    }
+
+    .t-phase {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .t-badge {
+      font-size: 10px;
+      font-weight: 800;
+      padding: 2px 6px;
+      border-radius: 4px;
+      background: rgba(56, 189, 248, 0.14);
+      color: var(--cyan-bright);
+    }
+
+    .t-phase:nth-child(3) .t-badge,
+    .t-phase:nth-child(4) .t-badge {
+      background: rgba(16, 185, 129, 0.15);
+      color: var(--emerald-bright);
+    }
+
+    .progress-track {
+      width: 100%;
+      height: 5px;
+      background: #111c33;
+      border-radius: 999px;
+      overflow: hidden;
+    }
+
+    .progress-fill {
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, #06b6d4 0%, #38bdf8 45%, #10b981 80%, #34d399 100%);
+      box-shadow: 0 0 12px rgba(56, 189, 248, 0.8);
+      animation: progressLoop var(--loop) infinite linear;
+    }
+
+    /* =========================================================================
+       KEYFRAME CHOREOGRAPHY (8-SECOND SEAMLESS LOOP)
+       ========================================================================= */
+
+    @keyframes dotBlink {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.4; transform: scale(0.85); }
+    }
+
+    @keyframes codeCyanFlash {
+      0%, 16%, 86%, 100% {
+        background: transparent;
+        border-left-color: transparent;
+      }
+      20%, 45% {
+        background: rgba(6, 182, 212, 0.18);
+        border-left-color: var(--cyan-bright);
+      }
+    }
+
+    @keyframes codeEmeraldFlash {
+      0%, 42%, 86%, 100% {
+        background: transparent;
+        border-left-color: transparent;
+      }
+      46%, 78% {
+        background: rgba(16, 185, 129, 0.16);
+        border-left-color: var(--emerald-bright);
+      }
+    }
+
+    @keyframes mutationBadgePulse {
+      0%, 16%, 86%, 100% {
+        opacity: 0.35;
+        transform: scale(0.95);
+      }
+      20%, 50% {
+        opacity: 1;
+        transform: scale(1);
+        box-shadow: 0 0 14px rgba(56, 189, 248, 0.55);
+      }
+    }
+
+    /* Node A Cyan Pulse */
+    @keyframes svgNodeACyanGlow {
+      0%, 17%, 86%, 100% {
+        stroke: #263554;
+        stroke-width: 1.8;
+        filter: drop-shadow(0 12px 24px rgba(2, 6, 23, 0.7));
+      }
+      21%, 38% {
+        stroke: #67e8f9;
+        stroke-width: 2.8;
+        filter: drop-shadow(0 0 26px rgba(6, 182, 212, 0.75));
+      }
+      39%, 80% {
+        stroke: #38bdf8;
+        stroke-width: 2.2;
+        filter: drop-shadow(0 0 14px rgba(6, 182, 212, 0.35));
+      }
+    }
+
+    @keyframes cyanShockwave {
+      0%, 18% {
+        opacity: 0;
+        transform: scale(0.92);
+      }
+      22% {
+        opacity: 0.9;
+        transform: scale(1);
+      }
+      38%, 100% {
+        opacity: 0;
+        transform: scale(1.26);
+      }
+    }
+
+    /* Node A Value Swap */
+    @keyframes adaOut {
+      0%, 20% { opacity: 1; }
+      25%, 88% { opacity: 0; }
+      94%, 100% { opacity: 1; }
+    }
+
+    @keyframes graceIn {
+      0%, 20% { opacity: 0; }
+      25%, 88% { opacity: 1; }
+      94%, 100% { opacity: 0; }
+    }
+
+    /* Circuit Trace Energy Flow: Node A -> Node C */
+    @keyframes traceFlowAC {
+      0%, 24% {
+        stroke-dashoffset: 340;
+        opacity: 0;
+      }
+      27% {
+        opacity: 1;
+      }
+      44%, 72% {
+        stroke-dashoffset: 0;
+        opacity: 1;
+      }
+      84%, 100% {
+        stroke-dashoffset: -340;
+        opacity: 0;
+      }
+    }
+
+    @keyframes particleACVisibility {
+      0%, 23%, 49%, 100% { opacity: 0; }
+      26%, 46% { opacity: 1; }
+    }
+
+    /* Node C (`profile = computed(...)`) Activation */
+    @keyframes svgNodeCEmeraldGlow {
+      0%, 42%, 88%, 100% {
+        stroke: #263554;
+        stroke-width: 1.8;
+        filter: drop-shadow(0 12px 24px rgba(2, 6, 23, 0.7));
+      }
+      46%, 68% {
+        stroke: #34d399;
+        stroke-width: 2.8;
+        filter: drop-shadow(0 0 28px rgba(16, 185, 129, 0.72));
+      }
+      69%, 84% {
+        stroke: #10b981;
+        stroke-width: 2.2;
+        filter: drop-shadow(0 0 14px rgba(16, 185, 129, 0.35));
+      }
+    }
+
+    @keyframes emeraldShockwave {
+      0%, 43% {
+        opacity: 0;
+        transform: scale(0.92);
+      }
+      47% {
+        opacity: 0.85;
+        transform: scale(1);
+      }
+      63%, 100% {
+        opacity: 0;
+        transform: scale(1.24);
+      }
+    }
+
+    /* Node C & Targeted DOM Value Swap */
+    @keyframes fullAdaOut {
+      0%, 44% { opacity: 1; }
+      49%, 88% { opacity: 0; }
+      94%, 100% { opacity: 1; }
+    }
+
+    @keyframes fullGraceIn {
+      0%, 44% { opacity: 0; }
+      49%, 88% { opacity: 1; }
+      94%, 100% { opacity: 0; }
+    }
+
+    /* Circuit Trace Energy Flow: Node C -> Targeted DOM Node */
+    @keyframes traceFlowCDOM {
+      0%, 46% {
+        stroke-dashoffset: 260;
+        opacity: 0;
+      }
+      49% {
+        opacity: 1;
+      }
+      60%, 80% {
+        stroke-dashoffset: 0;
+        opacity: 1;
+      }
+      88%, 100% {
+        stroke-dashoffset: -260;
+        opacity: 0;
+      }
+    }
+
+    @keyframes particleCDOMVisibility {
+      0%, 46%, 64%, 100% { opacity: 0; }
+      49%, 61% { opacity: 1; }
+    }
+
+    /* Targeted DOM Node Highlight */
+    @keyframes svgDomTargetGlow {
+      0%, 52%, 88%, 100% {
+        stroke: #263554;
+        stroke-width: 1.8;
+        filter: none;
+      }
+      56%, 82% {
+        stroke: #34d399;
+        stroke-width: 2.6;
+        filter: drop-shadow(0 0 22px rgba(16, 185, 129, 0.6));
+      }
+    }
+
+    @keyframes progressLoop {
+      0% { width: 0%; }
+      100% { width: 100%; }
+    }
+
+    @media (max-width: 1120px) {
+      .stage-1080 {
+        transform: scale(0.82);
+        transform-origin: center center;
+      }
+    }
+    @media (max-width: 920px) {
+      .stage-1080 {
+        transform: scale(0.64);
+        transform-origin: center center;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="stage-1080" role="img" aria-label="Angular Computed Signal Dependency Graph Animation in a 1080x1080 dark-mode macOS window">
+    <div class="macos-window">
+      <!-- macOS Window Titlebar -->
+      <div class="window-titlebar">
+        <div class="window-dots" aria-hidden="true">
+          <span class="w-dot red"></span>
+          <span class="w-dot yellow"></span>
+          <span class="w-dot green"></span>
+        </div>
+
+        <div class="address-bar">
+          <span class="protocol">https://</span>
+          <span class="domain">worldgyan.com</span>
+          <span>/courses/angular-architecture</span>
+        </div>
+
+        <div class="window-meta">
+          <span class="loop-pill">
+            <span class="loop-dot"></span>
+            computed()
+          </span>
+        </div>
+      </div>
+
+      <!-- Window Content -->
+      <div class="window-content">
+        <!-- Top Title + Live Code Strip -->
+        <div class="top-bar">
+          <div class="title-card">
+            <span class="title-eyebrow">REACTIVE DEPENDENCY GRAPH</span>
+            <h1>Angular Signal Part 1: computed() Graph</h1>
+          </div>
+
+          <div class="code-ribbon">
+            <div class="code-ribbon-line active-mutation">
+              <span>
+                <span class="kw">const</span> <span class="id">firstName</span> = <span class="fn">signal</span>(<span class="str">'Ada'</span>);
+              </span>
+              <span class="mutation-badge">⚡ NODE A PULSE</span>
+            </div>
+            <div class="code-ribbon-line">
+              <span>
+                <span class="kw">const</span> <span class="id">lastName</span> = <span class="fn">signal</span>(<span class="str">'Lovelace'</span>);
+                <span class="cm">// cached producer</span>
+              </span>
+            </div>
+            <div class="code-ribbon-line active-computed">
+              <span>
+                <span class="kw">const</span> <span class="id">fullName</span> = <span class="fn">computed</span>(() =&gt; <span class="str">`&#36;&#123;firstName()&#125; &#36;&#123;lastName()&#125;`</span>);
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Central Reactive Circuit Graph Stage (Pure Interconnected SVG Nodes + Circuit Paths) -->
+        <div class="circuit-stage">
+          <svg class="circuit-svg" viewBox="0 0 944 676" aria-hidden="true">
+            <defs>
+              <linearGradient id="nodeCardGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+                <stop offset="0%" stop-color="#131f38" />
+                <stop offset="100%" stop-color="#0b1324" />
+              </linearGradient>
+
+              <linearGradient id="cyanCircuitGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stop-color="#67e8f9" />
+                <stop offset="55%" stop-color="#38bdf8" />
+                <stop offset="100%" stop-color="#10b981" />
+              </linearGradient>
+
+              <linearGradient id="emeraldCircuitGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+                <stop offset="0%" stop-color="#34d399" />
+                <stop offset="100%" stop-color="#38bdf8" />
+              </linearGradient>
+
+              <radialGradient id="cyanParticleGlow" cx="50%" cy="50%" r="50%">
+                <stop offset="0%" stop-color="#ffffff" stop-opacity="1" />
+                <stop offset="35%" stop-color="#67e8f9" stop-opacity="0.95" />
+                <stop offset="70%" stop-color="#06b6d4" stop-opacity="0.55" />
+                <stop offset="100%" stop-color="#06b6d4" stop-opacity="0" />
+              </radialGradient>
+
+              <radialGradient id="emeraldParticleGlow" cx="50%" cy="50%" r="50%">
+                <stop offset="0%" stop-color="#ffffff" stop-opacity="1" />
+                <stop offset="35%" stop-color="#6ee7b7" stop-opacity="0.95" />
+                <stop offset="70%" stop-color="#10b981" stop-opacity="0.55" />
+                <stop offset="100%" stop-color="#10b981" stop-opacity="0" />
+              </radialGradient>
+            </defs>
+
+            <!-- Column Zone Headers -->
+            <g transform="translate(26, 18)">
+              <rect width="234" height="28" rx="8" fill="#0b1325" stroke="#1e293b" />
+              <text x="117" y="18" text-anchor="middle" fill="#94a3b8" font-family="monospace" font-size="11" font-weight="700">
+                1. SOURCE SIGNALS (PRODUCERS)
+              </text>
+            </g>
+
+            <g transform="translate(348, 18)">
+              <rect width="256" height="28" rx="8" fill="#0b1325" stroke="#1e293b" />
+              <text x="128" y="18" text-anchor="middle" fill="#94a3b8" font-family="monospace" font-size="11" font-weight="700">
+                2. COMPUTED SIGNAL (NODE C)
+              </text>
+            </g>
+
+            <g transform="translate(706, 18)">
+              <rect width="212" height="28" rx="8" fill="#0b1325" stroke="#1e293b" />
+              <text x="106" y="18" text-anchor="middle" fill="#94a3b8" font-family="monospace" font-size="11" font-weight="700">
+                3. DOM VIEW SUBTREE
+              </text>
+            </g>
+
+            <!-- =========================================================
+                 EXPANDING PULSE SHOCKWAVES BEHIND SVG NODES A & C
+                 ========================================================= -->
+            <rect class="node-a-pulse-ring" x="26" y="92" width="276" height="194" rx="16" />
+            <rect class="node-a-pulse-ring ring-2" x="26" y="92" width="276" height="194" rx="16" />
+            <rect class="node-c-pulse-ring" x="336" y="218" width="304" height="240" rx="16" />
+
+            <!-- =========================================================
+                 GLOWING CIRCUIT-STYLE SVG PATHS
+                 ========================================================= -->
+            <!-- Path 1: Node A (author) -> Node C (profile) -->
+            <path
+              id="circuitTraceAC"
+              class="trace-bg"
+              d="M 302 186 L 448 186 L 480 218"
+            />
+            <path
+              class="trace-guide"
+              d="M 302 186 L 448 186 L 480 218"
+            />
+            <path
+              class="trace-active-ac"
+              d="M 302 186 L 448 186 L 480 218"
+            />
+
+            <!-- Path 2: Node B (domain) -> Node C (profile) [Cached Read] -->
+            <path
+              class="trace-bg"
+              d="M 302 504 L 448 504 L 480 458"
+            />
+            <path
+              class="trace-cached"
+              d="M 302 504 L 448 504 L 480 458"
+            />
+
+            <!-- Path 3: Node C (profile) -> Targeted DOM Node -->
+            <path
+              id="circuitTraceCDOM"
+              class="trace-bg"
+              d="M 640 338 L 706 338"
+            />
+            <path
+              class="trace-guide"
+              d="M 640 338 L 706 338"
+            />
+            <path
+              class="trace-active-cdom"
+              d="M 640 338 L 706 338"
+            />
+
+            <!-- Untouched DOM Sibling Branches -->
+            <path class="trace-untouched" d="M 672 338 L 672 150 L 706 150" />
+            <path class="trace-untouched" d="M 672 338 L 672 528 L 706 528" />
+
+            <!-- Circuit Label Badges -->
+            <g transform="translate(332, 150)">
+              <rect width="144" height="22" rx="6" fill="#07101f" stroke="#06b6d4" stroke-width="1" />
+              <text x="72" y="15" text-anchor="middle" fill="#67e8f9" font-family="monospace" font-size="10.5" font-weight="700">
+                CYAN PARTICLE ➔ NODE C
+              </text>
+            </g>
+
+            <g transform="translate(332, 516)">
+              <rect width="144" height="22" rx="6" fill="#07101f" stroke="#334155" stroke-width="1" />
+              <text x="72" y="15" text-anchor="middle" fill="#94a3b8" font-family="monospace" font-size="10.5" font-weight="600">
+                CACHED READ (0ms)
+              </text>
+            </g>
+
+            <!-- =========================================================
+                 SVG NODE A: author (Pulses in Cyan)
+                 ========================================================= -->
+            <g transform="translate(26, 92)">
+              <rect class="svg-node-a-frame" width="276" height="194" rx="16" />
+
+              <!-- Header Badge -->
+              <rect x="18" y="16" width="122" height="22" rx="6" fill="rgba(6, 182, 212, 0.16)" stroke="#38bdf8" stroke-width="1" />
+              <text x="79" y="31" text-anchor="middle" fill="#67e8f9" font-family="monospace" font-size="10.5" font-weight="800">
+                NODE A · PRODUCER
+              </text>
+
+              <!-- Version Swap -->
+              <text x="256" y="31" text-anchor="end" fill="#94a3b8" font-family="monospace" font-size="11" class="val-ada">
+                v1 (init)
+              </text>
+              <text x="256" y="31" text-anchor="end" fill="#67e8f9" font-family="monospace" font-size="11" font-weight="700" class="val-grace">
+                v2 (pulsed)
+              </text>
+
+              <line x1="18" y1="48" x2="258" y2="48" stroke="rgba(148, 163, 184, 0.14)" />
+
+              <!-- Identifier -->
+              <text x="18" y="74" fill="#ffffff" font-family="monospace" font-size="15" font-weight="800">
+                firstName
+              </text>
+              <text x="258" y="74" text-anchor="end" fill="#38bdf8" font-family="monospace" font-size="12" font-weight="600">
+                signal&lt;string&gt;
+              </text>
+
+              <!-- Value Readout Box -->
+              <rect x="18" y="90" width="240" height="52" rx="10" fill="#060b16" stroke="#1e293b" />
+              <text x="30" y="120" fill="#64748b" font-family="monospace" font-size="10.5" font-weight="700">
+                VALUE
+              </text>
+              <text x="246" y="121" text-anchor="end" fill="#f8fafc" font-family="monospace" font-size="15.5" font-weight="800" class="val-ada">
+                'Ada'
+              </text>
+              <text x="246" y="121" text-anchor="end" fill="#67e8f9" font-family="monospace" font-size="15.5" font-weight="800" class="val-grace">
+                'Grace'
+              </text>
+
+              <!-- Footer -->
+              <text x="18" y="170" fill="#94a3b8" font-family="monospace" font-size="10.5">
+                firstName.set('Grace')
+              </text>
+              <text x="258" y="170" text-anchor="end" fill="#67e8f9" font-family="monospace" font-size="10.5" font-weight="700">
+                ● CYAN PULSE
+              </text>
+            </g>
+
+            <!-- =========================================================
+                 SVG NODE B: lastName (Unchanged Producer)
+                 ========================================================= -->
+            <g transform="translate(26, 404)">
+              <rect class="svg-node-b-frame" width="276" height="194" rx="16" />
+
+              <!-- Header Badge -->
+              <rect x="18" y="16" width="122" height="22" rx="6" fill="rgba(100, 116, 139, 0.16)" stroke="#475569" stroke-width="1" />
+              <text x="79" y="31" text-anchor="middle" fill="#cbd5e1" font-family="monospace" font-size="10.5" font-weight="800">
+                NODE B · PRODUCER
+              </text>
+              <text x="256" y="31" text-anchor="end" fill="#94a3b8" font-family="monospace" font-size="11">
+                v1 (clean)
+              </text>
+
+              <line x1="18" y1="48" x2="258" y2="48" stroke="rgba(148, 163, 184, 0.14)" />
+
+              <!-- Identifier -->
+              <text x="18" y="74" fill="#ffffff" font-family="monospace" font-size="15" font-weight="800">
+                lastName
+              </text>
+              <text x="258" y="74" text-anchor="end" fill="#94a3b8" font-family="monospace" font-size="12" font-weight="600">
+                signal&lt;string&gt;
+              </text>
+
+              <!-- Value Readout Box -->
+              <rect x="18" y="90" width="240" height="52" rx="10" fill="#060b16" stroke="#1e293b" />
+              <text x="30" y="120" fill="#64748b" font-family="monospace" font-size="10.5" font-weight="700">
+                VALUE
+              </text>
+              <text x="246" y="121" text-anchor="end" fill="#38bdf8" font-family="monospace" font-size="15.5" font-weight="800">
+                'Lovelace'
+              </text>
+
+              <!-- Footer -->
+              <text x="18" y="170" fill="#64748b" font-family="monospace" font-size="11">
+                0 re-evaluations
+              </text>
+              <text x="258" y="170" text-anchor="end" fill="#94a3b8" font-family="monospace" font-size="10.5" font-weight="700">
+                MEMOIZED
+              </text>
+            </g>
+
+            <!-- =========================================================
+                 SVG NODE C: fullName = computed(...) (Derived Node)
+                 ========================================================= -->
+            <g transform="translate(336, 218)">
+              <rect class="svg-node-c-frame" width="304" height="240" rx="16" />
+
+              <!-- Header Badge -->
+              <rect x="18" y="16" width="132" height="22" rx="6" fill="rgba(16, 185, 129, 0.16)" stroke="#34d399" stroke-width="1" />
+              <text x="84" y="31" text-anchor="middle" fill="#34d399" font-family="monospace" font-size="10.5" font-weight="800">
+                NODE C · COMPUTED
+              </text>
+
+              <text x="284" y="31" text-anchor="end" fill="#94a3b8" font-family="monospace" font-size="11" class="val-full-ada">
+                v1 (cached)
+              </text>
+              <text x="284" y="31" text-anchor="end" fill="#34d399" font-family="monospace" font-size="11" font-weight="700" class="val-full-grace">
+                v2 (recomputed)
+              </text>
+
+              <line x1="18" y1="48" x2="286" y2="48" stroke="rgba(148, 163, 184, 0.14)" />
+
+              <!-- Symbol & Signature -->
+              <text x="18" y="74" fill="#ffffff" font-family="monospace" font-size="15" font-weight="800">
+                fullName
+              </text>
+              <text x="286" y="74" text-anchor="end" fill="#34d399" font-family="monospace" font-size="12" font-weight="700">
+                computed(...)
+              </text>
+
+              <!-- Computed Formula Box -->
+              <rect x="18" y="88" width="268" height="34" rx="8" fill="#081121" stroke="rgba(56, 189, 248, 0.3)" stroke-dasharray="4 4" />
+              <text x="152" y="109" text-anchor="middle" fill="#cbd5e1" font-family="monospace" font-size="11.5">
+                () =&gt; `${firstName()} ${lastName()}`
+              </text>
+
+              <!-- Derived Output Box -->
+              <rect x="18" y="134" width="268" height="56" rx="10" fill="#060b16" stroke="#1e293b" />
+              <text x="30" y="166" fill="#64748b" font-family="monospace" font-size="10.5" font-weight="700">
+                OUTPUT
+              </text>
+              <text x="272" y="167" text-anchor="end" fill="#f8fafc" font-family="monospace" font-size="15" font-weight="800" class="val-full-ada">
+                'Ada Lovelace'
+              </text>
+              <text x="272" y="167" text-anchor="end" fill="#34d399" font-family="monospace" font-size="15" font-weight="800" class="val-full-grace">
+                'Grace Lovelace' ⚡
+              </text>
+
+              <!-- Footer -->
+              <text x="18" y="216" fill="#94a3b8" font-family="monospace" font-size="11">
+                Deps: [Node A, Node B]
+              </text>
+              <text x="286" y="216" text-anchor="end" fill="#34d399" font-family="monospace" font-size="10.5" font-weight="700">
+                INSTANT DERIVE
+              </text>
+            </g>
+
+            <!-- =========================================================
+                 RIGHT COLUMN: DOM VIEW SUBTREE (1 TARGETED, 2 UNTOUCHED)
+                 ========================================================= -->
+            <!-- Unrelated DOM Node 1 (Untouched) -->
+            <g transform="translate(706, 86)">
+              <rect class="svg-dom-untouched-frame" width="212" height="128" rx="14" />
+              <text x="16" y="28" fill="#94a3b8" font-family="monospace" font-size="11" font-weight="700">
+                &lt;app-header&gt;
+              </text>
+              <rect x="124" y="13" width="72" height="20" rx="4" fill="rgba(51, 65, 85, 0.5)" />
+              <text x="160" y="27" text-anchor="middle" fill="#94a3b8" font-family="monospace" font-size="9.5" font-weight="700">
+                UNTOUCHED
+              </text>
+
+              <rect x="16" y="46" width="180" height="40" rx="8" fill="#050912" stroke="#1e293b" />
+              <text x="106" y="70" text-anchor="middle" fill="#94a3b8" font-family="sans-serif" font-size="12" font-weight="600">
+                Navigation Bar
+              </text>
+
+              <text x="16" y="108" fill="#64748b" font-family="monospace" font-size="10">
+                DOM Checks: 0 (Skipped)
+              </text>
+            </g>
+
+            <!-- TARGETED DOM NODE Connected to Node C -->
+            <g transform="translate(706, 266)">
+              <rect class="svg-dom-target-frame" width="212" height="144" rx="14" />
+              <text x="16" y="28" fill="#34d399" font-family="monospace" font-size="11" font-weight="700">
+                &lt;h2&gt;{{ fullName() }}&lt;/h2&gt;
+              </text>
+              <rect x="142" y="13" width="54" height="20" rx="4" fill="rgba(16, 185, 129, 0.2)" stroke="#34d399" stroke-width="0.8" />
+              <text x="169" y="27" text-anchor="middle" fill="#34d399" font-family="monospace" font-size="9.5" font-weight="800">
+                UPDATED
+              </text>
+
+              <rect x="16" y="48" width="180" height="50" rx="8" fill="#050912" stroke="#1e293b" />
+              <text x="106" y="78" text-anchor="middle" fill="#f8fafc" font-family="sans-serif" font-size="14" font-weight="800" class="val-full-ada">
+                Ada Lovelace
+              </text>
+              <text x="106" y="78" text-anchor="middle" fill="#34d399" font-family="sans-serif" font-size="14" font-weight="800" class="val-full-grace">
+                Grace Lovelace
+              </text>
+
+              <text x="16" y="122" fill="#94a3b8" font-family="monospace" font-size="10">
+                Targeted O(1) Text Update
+              </text>
+            </g>
+
+            <!-- Unrelated DOM Node 2 (Untouched) -->
+            <g transform="translate(706, 464)">
+              <rect class="svg-dom-untouched-frame" width="212" height="128" rx="14" />
+              <text x="16" y="28" fill="#94a3b8" font-family="monospace" font-size="11" font-weight="700">
+                &lt;app-footer&gt;
+              </text>
+              <rect x="124" y="13" width="72" height="20" rx="4" fill="rgba(51, 65, 85, 0.5)" />
+              <text x="160" y="27" text-anchor="middle" fill="#94a3b8" font-family="monospace" font-size="9.5" font-weight="700">
+                UNTOUCHED
+              </text>
+
+              <rect x="16" y="46" width="180" height="40" rx="8" fill="#050912" stroke="#1e293b" />
+              <text x="106" y="70" text-anchor="middle" fill="#94a3b8" font-family="sans-serif" font-size="12" font-weight="600">
+                Footer Links
+              </text>
+
+              <text x="16" y="108" fill="#64748b" font-family="monospace" font-size="10">
+                DOM Checks: 0 (Skipped)
+              </text>
+            </g>
+
+            <!-- Circuit Solder Pads / Terminal Connectors -->
+            <circle cx="302" cy="186" r="6" fill="#06b6d4" stroke="#0f172a" stroke-width="2" />
+            <circle cx="480" cy="218" r="6" fill="#38bdf8" stroke="#0f172a" stroke-width="2" />
+            <circle cx="302" cy="504" r="5" fill="#64748b" stroke="#0f172a" stroke-width="2" />
+            <circle cx="480" cy="458" r="5" fill="#64748b" stroke="#0f172a" stroke-width="2" />
+            <circle cx="640" cy="338" r="6" fill="#10b981" stroke="#0f172a" stroke-width="2" />
+            <circle cx="706" cy="338" r="6" fill="#34d399" stroke="#0f172a" stroke-width="2" />
+
+            <!-- =========================================================
+                 ANIMATED GLOWING CYAN PARTICLE (NODE A ➔ NODE C)
+                 ========================================================= -->
+            <g class="particle-ac-group">
+              <circle r="18" fill="url(#cyanParticleGlow)">
+                <animateMotion
+                  dur="8s"
+                  repeatCount="indefinite"
+                  keyPoints="0;0;1;1"
+                  keyTimes="0;0.25;0.46;1"
+                  calcMode="linear"
+                >
+                  <mpath href="#circuitTraceAC" />
+                </animateMotion>
+              </circle>
+              <circle r="5.5" fill="#ffffff">
+                <animateMotion
+                  dur="8s"
+                  repeatCount="indefinite"
+                  keyPoints="0;0;1;1"
+                  keyTimes="0;0.25;0.46;1"
+                  calcMode="linear"
+                >
+                  <mpath href="#circuitTraceAC" />
+                </animateMotion>
+              </circle>
+            </g>
+
+            <!-- =========================================================
+                 ANIMATED GLOWING EMERALD PARTICLE (NODE C ➔ DOM)
+                 ========================================================= -->
+            <g class="particle-cdom-group">
+              <circle r="16" fill="url(#emeraldParticleGlow)">
+                <animateMotion
+                  dur="8s"
+                  repeatCount="indefinite"
+                  keyPoints="0;0;1;1"
+                  keyTimes="0;0.47;0.60;1"
+                  calcMode="linear"
+                >
+                  <mpath href="#circuitTraceCDOM" />
+                </animateMotion>
+              </circle>
+              <circle r="5" fill="#ffffff">
+                <animateMotion
+                  dur="8s"
+                  repeatCount="indefinite"
+                  keyPoints="0;0;1;1"
+                  keyTimes="0;0.47;0.60;1"
+                  calcMode="linear"
+                >
+                  <mpath href="#circuitTraceCDOM" />
+                </animateMotion>
+              </circle>
+            </g>
+          </svg>
+        </div>
+
+        <!-- Bottom Timeline Bar -->
+        <div class="timeline-bar">
+          <div class="timeline-phases">
+            <div class="t-phase">
+              <span class="t-badge">01</span>
+              <span>Node A: <code>firstName.set('Grace')</code></span>
+            </div>
+            <div class="t-phase">
+              <span class="t-badge">02</span>
+              <span>Particle flows Node A ➔ Node C</span>
+            </div>
+            <div class="t-phase">
+              <span class="t-badge">03</span>
+              <span>Node C: <code>computed()</code> derives</span>
+            </div>
+            <div class="t-phase">
+              <span class="t-badge">04</span>
+              <span>DOM: <code>&lt;h2&gt;</code> patched (O(1))</span>
+            </div>
+          </div>
+          <div class="progress-track">
+            <div class="progress-fill"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <style>
+    html.res-4k body {
+      overflow: auto;
+      justify-content: flex-start;
+      align-items: flex-start;
+    }
+    html.res-4k .stage-1080 {
+      transform: scale(3.5555556) !important;
+      transform-origin: top left !important;
+      margin-bottom: 2760px;
+      margin-right: 2760px;
+    }
+  </style>
+  <script>
+    if (new URLSearchParams(location.search).get("res") === "4k") document.documentElement.classList.add("res-4k");
+  </script>
+</body>
+</html>
+

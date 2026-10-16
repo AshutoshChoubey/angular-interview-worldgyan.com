@@ -19,3 +19,4 @@ export const securityHeadersInterceptor: HttpInterceptorFn = (req, next) => {
 
   return next(secureReq);
 };
+

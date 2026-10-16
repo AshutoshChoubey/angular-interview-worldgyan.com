@@ -1,0 +1,413 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Angular Project Flow Part 1: Modern Boot Pipeline (1080x1080 macOS Animation)</title>
+  <style>
+    :root {
+      --bg-outer: #060a14;
+      --slate-bg: #0f172a;
+      --slate-deep: #090e1c;
+      --slate-card: #111c33;
+      --slate-border: #1e293b;
+      --slate-muted: #64748b;
+      --text-main: #f8fafc;
+      --text-secondary: #94a3b8;
+      --cyan: #38bdf8;
+      --emerald: #34d399;
+      --purple: #a855f7;
+      --amber: #fbbf24;
+      --red-dot: #ff5f56;
+      --yellow-dot: #ffbd2e;
+      --green-dot: #27c93f;
+      --font-sans: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', Roboto, sans-serif;
+      --font-mono: 'JetBrains Mono', 'Fira Code', Consolas, monospace;
+      --loop: 8s;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html, body {
+      width: 100%;
+      height: 100%;
+      background: var(--bg-outer);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: var(--font-sans);
+      color: var(--text-main);
+      overflow: hidden;
+    }
+
+    .stage-1080 {
+      width: 1080px;
+      height: 1080px;
+      min-width: 1080px;
+      min-height: 1080px;
+      background:
+        radial-gradient(circle at 20% 25%, rgba(56, 189, 248, 0.12) 0%, transparent 45%),
+        radial-gradient(circle at 80% 75%, rgba(52, 211, 153, 0.12) 0%, transparent 45%),
+        var(--slate-bg);
+      padding: 40px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+    }
+
+    .stage-1080::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background-image:
+        linear-gradient(to right, rgba(56, 189, 248, 0.04) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(56, 189, 248, 0.04) 1px, transparent 1px);
+      background-size: 36px 36px;
+      pointer-events: none;
+    }
+
+    .macos-window {
+      width: 1000px;
+      height: 1000px;
+      background: rgba(9, 14, 28, 0.96);
+      border: 1px solid rgba(56, 189, 248, 0.28);
+      border-radius: 20px;
+      box-shadow: 0 32px 80px rgba(0, 0, 0, 0.8), 0 0 40px rgba(56, 189, 248, 0.12);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      position: relative;
+      z-index: 2;
+    }
+
+    .window-titlebar {
+      height: 52px;
+      background: #0d1527;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 20px;
+    }
+
+    .window-dots {
+      display: flex;
+      gap: 8px;
+    }
+    .window-dot { width: 12px; height: 12px; border-radius: 50%; }
+    .window-dot.red { background: var(--red-dot); }
+    .window-dot.yellow { background: var(--yellow-dot); }
+    .window-dot.green { background: var(--green-dot); }
+
+    .window-address {
+      font-family: var(--font-mono);
+      font-size: 13px;
+      color: #94a3b8;
+      background: rgba(15, 23, 42, 0.8);
+      padding: 5px 22px;
+      border-radius: 8px;
+      border: 1px solid rgba(255, 255, 255, 0.06);
+    }
+
+    .window-pill {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      font-weight: 700;
+      color: #38bdf8;
+      background: rgba(56, 189, 248, 0.12);
+      border: 1px solid rgba(56, 189, 248, 0.35);
+      padding: 4px 10px;
+      border-radius: 999px;
+    }
+
+    .window-content {
+      flex: 1;
+      padding: 26px 30px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+
+    .content-header {
+      margin-bottom: 16px;
+    }
+
+    .content-eyebrow {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.14em;
+      color: var(--cyan);
+      text-transform: uppercase;
+      margin-bottom: 4px;
+    }
+
+    .content-title {
+      font-size: 24px;
+      font-weight: 800;
+      color: #f8fafc;
+      letter-spacing: -0.02em;
+    }
+
+    .boot-diagram {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 14px;
+      margin-bottom: 20px;
+      position: relative;
+    }
+
+    .boot-step-card {
+      background: #0d1527;
+      border: 1px solid #1e293b;
+      border-radius: 14px;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      position: relative;
+      transition: all 0.3s ease;
+    }
+
+    .step-badge {
+      font-family: var(--font-mono);
+      font-size: 10px;
+      font-weight: 700;
+      padding: 3px 8px;
+      border-radius: 6px;
+      display: inline-block;
+      width: fit-content;
+    }
+    .badge-step-1 { background: rgba(168, 85, 247, 0.2); color: #c084fc; border: 1px solid rgba(168, 85, 247, 0.4); }
+    .badge-step-2 { background: rgba(56, 189, 248, 0.2); color: #7dd3fc; border: 1px solid rgba(56, 189, 248, 0.4); }
+    .badge-step-3 { background: rgba(251, 191, 36, 0.2); color: #fde047; border: 1px solid rgba(251, 191, 36, 0.4); }
+    .badge-step-4 { background: rgba(52, 211, 153, 0.2); color: #6ee7b7; border: 1px solid rgba(52, 211, 153, 0.4); }
+
+    .step-title {
+      font-size: 15px;
+      font-weight: 700;
+      color: #f8fafc;
+    }
+
+    .step-file {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      color: #94a3b8;
+    }
+
+    .step-desc {
+      font-size: 11px;
+      line-height: 1.5;
+      color: #cbd5e1;
+    }
+
+    .step-code-preview {
+      background: #050811;
+      border-radius: 8px;
+      padding: 8px 10px;
+      font-family: var(--font-mono);
+      font-size: 10px;
+      line-height: 1.4;
+      color: #94a3b8;
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      white-space: pre-wrap;
+    }
+
+    .step-card-active-1 { animation: pulseStep1 var(--loop) infinite; }
+    .step-card-active-2 { animation: pulseStep2 var(--loop) infinite; }
+    .step-card-active-3 { animation: pulseStep3 var(--loop) infinite; }
+    .step-card-active-4 { animation: pulseStep4 var(--loop) infinite; }
+
+    @keyframes pulseStep1 {
+      0%, 22% { border-color: #a855f7; box-shadow: 0 0 24px rgba(168, 85, 247, 0.35); transform: translateY(-3px); }
+      25%, 100% { border-color: #1e293b; box-shadow: none; transform: translateY(0); }
+    }
+    @keyframes pulseStep2 {
+      0%, 22% { border-color: #1e293b; box-shadow: none; transform: translateY(0); }
+      25%, 47% { border-color: #38bdf8; box-shadow: 0 0 24px rgba(56, 189, 248, 0.35); transform: translateY(-3px); }
+      50%, 100% { border-color: #1e293b; box-shadow: none; transform: translateY(0); }
+    }
+    @keyframes pulseStep3 {
+      0%, 47% { border-color: #1e293b; box-shadow: none; transform: translateY(0); }
+      50%, 72% { border-color: #fbbf24; box-shadow: 0 0 24px rgba(251, 191, 36, 0.35); transform: translateY(-3px); }
+      75%, 100% { border-color: #1e293b; box-shadow: none; transform: translateY(0); }
+    }
+    @keyframes pulseStep4 {
+      0%, 72% { border-color: #1e293b; box-shadow: none; transform: translateY(0); }
+      75%, 98% { border-color: #34d399; box-shadow: 0 0 28px rgba(52, 211, 153, 0.4); transform: translateY(-3px); }
+      100% { border-color: #1e293b; box-shadow: none; transform: translateY(0); }
+    }
+
+    .runtime-stage {
+      background: #070b16;
+      border: 1px solid rgba(56, 189, 248, 0.2);
+      border-radius: 14px;
+      padding: 18px 22px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .runtime-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-family: var(--font-mono);
+      font-size: 11px;
+    }
+    .runtime-status { color: #38bdf8; font-weight: 700; display: flex; align-items: center; gap: 8px; }
+    .status-dot { width: 8px; height: 8px; border-radius: 50%; background: #34d399; animation: blink 1.2s infinite; }
+    @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
+
+    .code-dual-grid {
+      display: grid;
+      grid-template-columns: 1.1fr 1fr;
+      gap: 14px;
+    }
+
+    .code-box {
+      background: #03060d;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 10px;
+      padding: 14px 16px;
+      font-family: var(--font-mono);
+      font-size: 11.5px;
+      line-height: 1.55;
+      color: #cbd5e1;
+      overflow: hidden;
+    }
+    .code-box-header {
+      font-size: 11px;
+      color: #94a3b8;
+      margin-bottom: 8px;
+      display: flex;
+      justify-content: space-between;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+      padding-bottom: 5px;
+    }
+    .kwd { color: #f472b6; font-weight: 600; }
+    .func { color: #38bdf8; font-weight: 600; }
+    .str { color: #a5f3fc; }
+    .cmnt { color: #64748b; font-style: italic; }
+
+    .window-footer {
+      height: 40px;
+      border-top: 1px solid rgba(255, 255, 255, 0.06);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 8px;
+      font-family: var(--font-mono);
+      font-size: 12px;
+      color: #94a3b8;
+    }
+    .author-tag { color: #38bdf8; font-weight: 700; }
+  </style>
+</head>
+<body>
+  <div class="stage-1080">
+    <div class="macos-window">
+      <div class="window-titlebar">
+        <div class="window-dots">
+          <span class="window-dot red"></span>
+          <span class="window-dot yellow"></span>
+          <span class="window-dot green"></span>
+        </div>
+        <div class="window-address">https://worldgyan.com/courses/angular-architecture</div>
+        <div class="window-pill">Angular 22 Boot Pipeline</div>
+      </div>
+
+      <div class="window-content">
+        <div class="content-header">
+          <p class="content-eyebrow">RUNTIME EXECUTION ARCHITECTURE</p>
+          <h2 class="content-title">Angular Project Flow Part 1: Modern Boot Pipeline</h2>
+        </div>
+
+        <!-- 4-Step Boot Flow Cards -->
+        <div class="boot-diagram">
+          <div class="boot-step-card step-card-active-1">
+            <span class="step-badge badge-step-1">STEP 01</span>
+            <h4 class="step-title">HTML Shell</h4>
+            <span class="step-file">src/index.html</span>
+            <p class="step-desc">Browser parses <code>&lt;base href="/"&gt;</code> &amp; empty <code>&lt;app-root&gt;</code>.</p>
+            <div class="step-code-preview">&lt;app-root&gt;&lt;/app-root&gt;
+&lt;script type="module" src="main.js"&gt;</div>
+          </div>
+
+          <div class="boot-step-card step-card-active-2">
+            <span class="step-badge badge-step-2">STEP 02</span>
+            <h4 class="step-title">Client Bootstrap</h4>
+            <span class="step-file">src/main.ts</span>
+            <p class="step-desc">Executes standalone root bootstrap without legacy <code>PlatformRef</code>.</p>
+            <div class="step-code-preview">bootstrapApplication(
+  AppComponent, appConfig
+);</div>
+          </div>
+
+          <div class="boot-step-card step-card-active-3">
+            <span class="step-badge badge-step-3">STEP 03</span>
+            <h4 class="step-title">DI &amp; Config</h4>
+            <span class="step-file">src/app/app.config.ts</span>
+            <p class="step-desc">Registers Zoneless change detection, Router, and fetch HttpClient.</p>
+            <div class="step-code-preview">provideZonelessChange...()
+provideRouter(routes)</div>
+          </div>
+
+          <div class="boot-step-card step-card-active-4">
+            <span class="step-badge badge-step-4">STEP 04</span>
+            <h4 class="step-title">Reactive Root</h4>
+            <span class="step-file">AppComponent</span>
+            <p class="step-desc">Mounts host, awakens Signal graph, microtask reconciliation.</p>
+            <div class="step-code-preview">Signals Graph Online
+O(1) View Updates</div>
+          </div>
+        </div>
+
+        <!-- Live Code Execution Window -->
+        <div class="runtime-stage">
+          <div class="runtime-bar">
+            <div class="runtime-status"><span class="status-dot"></span> ANGULAR 22 STANDALONE ZONELESS ENGINE ACTIVE</div>
+            <span style="color:#64748b;">esbuild / Vite Application Builder</span>
+          </div>
+
+          <div class="code-dual-grid">
+            <div class="code-box">
+              <div class="code-box-header">
+                <span>src/main.ts</span>
+                <span style="color:#38bdf8;">Entrypoint</span>
+              </div>
+              <div><span class="kwd">import</span> &#123; <span class="func">bootstrapApplication</span> &#125; <span class="kwd">from</span> <span class="str">'@angular/core'</span>;</div>
+              <div><span class="kwd">import</span> &#123; appConfig &#125; <span class="kwd">from</span> <span class="str">'./app/app.config'</span>;</div>
+              <div><span class="kwd">import</span> &#123; AppComponent &#125; <span class="kwd">from</span> <span class="str">'./app/app.component'</span>;</div>
+              <br/>
+              <div><span class="func">bootstrapApplication</span>(AppComponent, appConfig)</div>
+              <div>&nbsp;&nbsp;.<span class="func">catch</span>(err =&gt; console.<span class="func">error</span>(err));</div>
+            </div>
+
+            <div class="code-box">
+              <div class="code-box-header">
+                <span>src/app/app.config.ts</span>
+                <span style="color:#34d399;">Zoneless Providers</span>
+              </div>
+              <div><span class="kwd">export const</span> appConfig: ApplicationConfig = &#123;</div>
+              <div>&nbsp;&nbsp;providers: [</div>
+              <div>&nbsp;&nbsp;&nbsp;&nbsp;<span class="func">provideZonelessChangeDetection</span>(),</div>
+              <div>&nbsp;&nbsp;&nbsp;&nbsp;<span class="func">provideRouter</span>(routes),</div>
+              <div>&nbsp;&nbsp;&nbsp;&nbsp;<span class="func">provideHttpClient</span>(<span class="func">withFetch</span>())</div>
+              <div>&nbsp;&nbsp;]</div>
+              <div>&#125;;</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="window-footer">
+          <span>⚡ Zero Zone.js monkey-patching · Direct Signal microtask scheduling</span>
+          <span class="author-tag">Ashutosh Kumar Choubey</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>
+

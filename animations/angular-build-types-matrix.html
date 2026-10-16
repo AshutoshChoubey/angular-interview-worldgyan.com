@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Angular Project Flow Part 4: Angular 22 Build Pipeline (1080x1080 macOS Animation)</title>
+  <style>
+    :root {
+      --bg-outer: #060a14;
+      --slate-bg: #0f172a;
+      --slate-deep: #090e1c;
+      --slate-card: #111c33;
+      --slate-border: #1e293b;
+      --text-main: #f8fafc;
+      --text-secondary: #94a3b8;
+      --cyan: #38bdf8;
+      --emerald: #34d399;
+      --purple: #a855f7;
+      --amber: #fbbf24;
+      --red-dot: #ff5f56;
+      --yellow-dot: #ffbd2e;
+      --green-dot: #27c93f;
+      --font-sans: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', Roboto, sans-serif;
+      --font-mono: 'JetBrains Mono', 'Fira Code', Consolas, monospace;
+      --loop: 8s;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html, body {
+      width: 100%;
+      height: 100%;
+      background: var(--bg-outer);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: var(--font-sans);
+      color: var(--text-main);
+      overflow: hidden;
+    }
+
+    .stage-1080 {
+      width: 1080px;
+      height: 1080px;
+      min-width: 1080px;
+      min-height: 1080px;
+      background:
+        radial-gradient(circle at 50% 20%, rgba(56, 189, 248, 0.12) 0%, transparent 50%),
+        radial-gradient(circle at 80% 80%, rgba(168, 85, 247, 0.12) 0%, transparent 45%),
+        var(--slate-bg);
+      padding: 40px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+    }
+
+    .stage-1080::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background-image:
+        linear-gradient(to right, rgba(56, 189, 248, 0.04) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(56, 189, 248, 0.04) 1px, transparent 1px);
+      background-size: 36px 36px;
+      pointer-events: none;
+    }
+
+    .macos-window {
+      width: 1000px;
+      height: 1000px;
+      background: rgba(9, 14, 28, 0.96);
+      border: 1px solid rgba(56, 189, 248, 0.28);
+      border-radius: 20px;
+      box-shadow: 0 32px 80px rgba(0, 0, 0, 0.8), 0 0 40px rgba(56, 189, 248, 0.12);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      position: relative;
+      z-index: 2;
+    }
+
+    .window-titlebar {
+      height: 52px;
+      background: #0d1527;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 20px;
+    }
+
+    .window-dots { display: flex; gap: 8px; }
+    .window-dot { width: 12px; height: 12px; border-radius: 50%; }
+    .window-dot.red { background: var(--red-dot); }
+    .window-dot.yellow { background: var(--yellow-dot); }
+    .window-dot.green { background: var(--green-dot); }
+
+    .window-address {
+      font-family: var(--font-mono);
+      font-size: 13px;
+      color: #94a3b8;
+      background: rgba(15, 23, 42, 0.8);
+      padding: 5px 22px;
+      border-radius: 8px;
+      border: 1px solid rgba(255, 255, 255, 0.06);
+    }
+
+    .window-pill {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      font-weight: 700;
+      color: #38bdf8;
+      background: rgba(56, 189, 248, 0.12);
+      border: 1px solid rgba(56, 189, 248, 0.35);
+      padding: 4px 10px;
+      border-radius: 999px;
+    }
+
+    .window-content {
+      flex: 1;
+      padding: 26px 30px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+
+    .content-header { margin-bottom: 16px; }
+
+    .content-eyebrow {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.14em;
+      color: var(--cyan);
+      text-transform: uppercase;
+      margin-bottom: 4px;
+    }
+
+    .content-title {
+      font-size: 24px;
+      font-weight: 800;
+      color: #f8fafc;
+      letter-spacing: -0.02em;
+    }
+
+    .matrix-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+      margin-bottom: 16px;
+    }
+
+    .build-card {
+      background: #0d1527;
+      border: 1px solid #1e293b;
+      border-radius: 14px;
+      padding: 18px 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      position: relative;
+    }
+    .build-card-csr { border-color: rgba(56, 189, 248, 0.35); background: rgba(56, 189, 248, 0.05); }
+    .build-card-ssr { border-color: rgba(168, 85, 247, 0.35); background: rgba(168, 85, 247, 0.05); }
+    .build-card-ssg { border-color: rgba(52, 211, 153, 0.35); background: rgba(52, 211, 153, 0.05); }
+
+    .build-badge {
+      font-family: var(--font-mono);
+      font-size: 10px;
+      font-weight: 700;
+      padding: 3px 8px;
+      border-radius: 6px;
+      width: fit-content;
+    }
+    .badge-csr { background: rgba(56, 189, 248, 0.2); color: #7dd3fc; }
+    .badge-ssr { background: rgba(168, 85, 247, 0.2); color: #c084fc; }
+    .badge-ssg { background: rgba(52, 211, 153, 0.2); color: #6ee7b7; }
+
+    .build-title {
+      font-size: 16px;
+      font-weight: 700;
+      color: #f8fafc;
+    }
+
+    .build-target {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      color: #94a3b8;
+    }
+
+    .build-desc {
+      font-size: 11.5px;
+      line-height: 1.5;
+      color: #cbd5e1;
+    }
+
+    .artifacts-box {
+      background: #050811;
+      border-radius: 8px;
+      padding: 10px 12px;
+      font-family: var(--font-mono);
+      font-size: 10px;
+      line-height: 1.45;
+      color: #94a3b8;
+      border: 1px solid rgba(255, 255, 255, 0.05);
+    }
+    .art-label { color: #f8fafc; font-weight: 700; margin-bottom: 4px; display: block; }
+    .art-item { color: #a5f3fc; }
+
+    .commands-bar {
+      background: #070b16;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 12px;
+      padding: 14px 18px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .commands-title {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      color: #38bdf8;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+
+    .commands-row {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 10px;
+    }
+
+    .cmd-pill {
+      background: #020617;
+      border: 1px solid rgba(255, 255, 255, 0.07);
+      border-radius: 8px;
+      padding: 8px 10px;
+      font-family: var(--font-mono);
+      font-size: 10.5px;
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+    }
+    .cmd-name { color: #34d399; font-weight: 700; }
+    .cmd-desc { color: #64748b; font-size: 9.5px; }
+
+    .window-footer {
+      height: 40px;
+      border-top: 1px solid rgba(255, 255, 255, 0.06);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 8px;
+      font-family: var(--font-mono);
+      font-size: 12px;
+      color: #94a3b8;
+    }
+    .author-tag { color: #38bdf8; font-weight: 700; }
+  </style>
+</head>
+<body>
+  <div class="stage-1080">
+    <div class="macos-window">
+      <div class="window-titlebar">
+        <div class="window-dots">
+          <span class="window-dot red"></span>
+          <span class="window-dot yellow"></span>
+          <span class="window-dot green"></span>
+        </div>
+        <div class="window-address">https://worldgyan.com/courses/angular-architecture</div>
+        <div class="window-pill">Build Matrix • CSR / SSR / SSG</div>
+      </div>
+
+      <div class="window-content">
+        <div class="content-header">
+          <p class="content-eyebrow">COMPILATION TARGETS &amp; DEPLOYMENT ARTIFACTS</p>
+          <h2 class="content-title">Angular Project Flow Part 4: Angular 22 Build Pipeline</h2>
+        </div>
+
+        <!-- 3-Column Matrix -->
+        <div class="matrix-grid">
+          <!-- Column 1: CSR -->
+          <div class="build-card build-card-csr">
+            <span class="build-badge badge-csr">TYPE 01 · CSR</span>
+            <h4 class="build-title">Client-Side Rendering</h4>
+            <span class="build-target">dist/app/browser/</span>
+            <p class="build-desc">Compiles single browser bundle. Client downloads JS and renders DOM in browser via Signals.</p>
+            <div class="artifacts-box">
+              <span class="art-label">Build Artifacts:</span>
+              <div class="art-item">index.html (shell)</div>
+              <div class="art-item">main-[hash].js</div>
+              <div class="art-item">styles-[hash].css</div>
+            </div>
+          </div>
+
+          <!-- Column 2: SSR -->
+          <div class="build-card build-card-ssr">
+            <span class="build-badge badge-ssr">TYPE 02 · SSR</span>
+            <h4 class="build-title">Server-Side Rendering</h4>
+            <span class="build-target">dist/app/browser &amp; server</span>
+            <p class="build-desc">Dual compilation. Node.js renders HTML on request. Client rehydrates with event replay.</p>
+            <div class="artifacts-box">
+              <span class="art-label">Build Artifacts:</span>
+              <div class="art-item">browser/ (client assets)</div>
+              <div class="art-item">server/main.server.mjs</div>
+              <div class="art-item">server.ts (Node server)</div>
+            </div>
+          </div>
+
+          <!-- Column 3: SSG -->
+          <div class="build-card build-card-ssg">
+            <span class="build-badge badge-ssg">TYPE 03 · SSG</span>
+            <h4 class="build-title">Static Prerendering</h4>
+            <span class="build-target">prerender: true</span>
+            <p class="build-desc">Precomputes HTML at build time for every discoverable route. Zero runtime server needed.</p>
+            <div class="artifacts-box">
+              <span class="art-label">Build Artifacts:</span>
+              <div class="art-item">index.html (prerendered)</div>
+              <div class="art-item">courses/index.html</div>
+              <div class="art-item">Zero TTFB Latency</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Commands Bar -->
+        <div class="commands-bar">
+          <span class="commands-title">CLI Execution Commands</span>
+          <div class="commands-row">
+            <div class="cmd-pill">
+              <span class="cmd-name">ng build</span>
+              <span class="cmd-desc">Prod: esbuild + hashes</span>
+            </div>
+            <div class="cmd-pill">
+              <span class="cmd-name">ng serve</span>
+              <span class="cmd-desc">Dev: Vite HMR server</span>
+            </div>
+            <div class="cmd-pill">
+              <span class="cmd-name">ng build --watch</span>
+              <span class="cmd-desc">Dev: incremental rebuild</span>
+            </div>
+            <div class="cmd-pill">
+              <span class="cmd-name">ng test</span>
+              <span class="cmd-desc">Unit &amp; component test</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="window-footer">
+          <span>⚡ Universal builder output · Deployable to Nginx, S3, Cloudflare, or Docker</span>
+          <span class="author-tag">Ashutosh Kumar Choubey</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>
+

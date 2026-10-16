@@ -189,3 +189,4 @@ Explore the complete production-grade TypeScript implementations in [`examples/`
 - [`examples/security-headers.interceptor.ts`](examples/security-headers.interceptor.ts) — Custom security headers & CSRF injection.
 - [`examples/auth.guard.ts`](examples/auth.guard.ts) — Modern `CanActivateFn` with query param redirection.
 - [`examples/auth.service.ts`](examples/auth.service.ts) — Signal-based `AuthService` with $O(1)$ reactive state.
+

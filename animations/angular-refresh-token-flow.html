@@ -1,0 +1,429 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Angular Refresh Token Flow: 401 Interception & Replay Queue (1080x1080 macOS Animation)</title>
+  <style>
+    :root {
+      --bg-outer: #060a14;
+      --slate-bg: #0f172a;
+      --slate-deep: #090e1c;
+      --slate-card: #111c33;
+      --slate-border: #1e293b;
+      --slate-muted: #64748b;
+      --text-main: #f8fafc;
+      --text-secondary: #94a3b8;
+      --cyan: #38bdf8;
+      --emerald: #34d399;
+      --purple: #a855f7;
+      --amber: #fbbf24;
+      --rose: #f43f5e;
+      --red-dot: #ff5f56;
+      --yellow-dot: #ffbd2e;
+      --green-dot: #27c93f;
+      --font-sans: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', Roboto, sans-serif;
+      --font-mono: 'JetBrains Mono', 'Fira Code', Consolas, monospace;
+      --loop: 8s;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html, body {
+      width: 100%;
+      height: 100%;
+      background: var(--bg-outer);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: var(--font-sans);
+      color: var(--text-main);
+      overflow: hidden;
+    }
+
+    .stage-1080 {
+      width: 1080px;
+      height: 1080px;
+      min-width: 1080px;
+      min-height: 1080px;
+      background:
+        radial-gradient(circle at 20% 25%, rgba(244, 63, 94, 0.12) 0%, transparent 45%),
+        radial-gradient(circle at 80% 75%, rgba(52, 211, 153, 0.14) 0%, transparent 45%),
+        var(--slate-bg);
+      padding: 40px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+    }
+
+    .stage-1080::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background-image:
+        linear-gradient(to right, rgba(56, 189, 248, 0.04) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(56, 189, 248, 0.04) 1px, transparent 1px);
+      background-size: 36px 36px;
+      pointer-events: none;
+    }
+
+    .macos-window {
+      width: 1000px;
+      height: 1000px;
+      background: rgba(9, 14, 28, 0.96);
+      border: 1px solid rgba(244, 63, 94, 0.3);
+      border-radius: 20px;
+      box-shadow: 0 32px 80px rgba(0, 0, 0, 0.8), 0 0 40px rgba(244, 63, 94, 0.1);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      position: relative;
+      z-index: 2;
+    }
+
+    .window-titlebar {
+      height: 52px;
+      background: #0d1527;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 20px;
+    }
+
+    .window-dots {
+      display: flex;
+      gap: 8px;
+    }
+    .window-dot { width: 12px; height: 12px; border-radius: 50%; }
+    .window-dot.red { background: var(--red-dot); }
+    .window-dot.yellow { background: var(--yellow-dot); }
+    .window-dot.green { background: var(--green-dot); }
+
+    .window-title {
+      font-family: var(--font-mono);
+      font-size: 15px;
+      font-weight: 700;
+      color: #94a3b8;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .window-title .badge {
+      background: rgba(244, 63, 94, 0.14);
+      color: var(--rose);
+      border: 1px solid rgba(244, 63, 94, 0.3);
+      padding: 3px 10px;
+      border-radius: 5px;
+      font-size: 12.5px;
+    }
+
+    .window-author {
+      font-family: var(--font-mono);
+      font-size: 13px;
+      color: #94a3b8;
+    }
+
+    .window-content {
+      flex: 1;
+      padding: 26px 32px 22px;
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+    }
+
+    /* Hero Strip */
+    .hero-strip {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+      padding-bottom: 14px;
+    }
+    .hero-strip h1 {
+      font-size: 26px;
+      font-weight: 800;
+      color: #ffffff;
+      letter-spacing: -0.02em;
+    }
+    .hero-strip h1 span {
+      color: var(--rose);
+    }
+    .hero-pills {
+      display: flex;
+      gap: 8px;
+    }
+    .pill {
+      font-family: var(--font-mono);
+      font-size: 13px;
+      font-weight: 700;
+      padding: 5px 12px;
+      border-radius: 6px;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    .pill-rose { background: rgba(244, 63, 94, 0.14); color: var(--rose); border: 1px solid rgba(244, 63, 94, 0.3); }
+    .pill-emerald { background: rgba(52, 211, 153, 0.14); color: var(--emerald); border: 1px solid rgba(52, 211, 153, 0.3); }
+    .pill-cyan { background: rgba(56, 189, 248, 0.14); color: var(--cyan); border: 1px solid rgba(56, 189, 248, 0.3); }
+
+    /* Flow Stage */
+    .flow-canvas {
+      flex: 1;
+      background: #080d1a;
+      border: 1px solid var(--slate-border);
+      border-radius: 14px;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      position: relative;
+    }
+
+    .step-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 14px;
+    }
+
+    .step-card {
+      background: var(--slate-card);
+      border: 1px solid var(--slate-border);
+      border-radius: 10px;
+      padding: 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      position: relative;
+    }
+
+    .step-badge {
+      font-family: var(--font-mono);
+      font-size: 12px;
+      font-weight: 800;
+      text-transform: uppercase;
+      padding: 3px 8px;
+      border-radius: 4px;
+      width: fit-content;
+    }
+    .badge-expired { background: rgba(244, 63, 94, 0.18); color: var(--rose); border: 1px solid rgba(244, 63, 94, 0.4); }
+    .badge-catch { background: rgba(251, 191, 36, 0.18); color: var(--amber); border: 1px solid rgba(251, 191, 36, 0.4); }
+    .badge-refresh { background: rgba(168, 85, 247, 0.18); color: var(--purple); border: 1px solid rgba(168, 85, 247, 0.4); }
+    .badge-replay { background: rgba(52, 211, 153, 0.18); color: var(--emerald); border: 1px solid rgba(52, 211, 153, 0.4); }
+
+    .step-card h3 {
+      font-size: 16px;
+      font-weight: 800;
+      color: #f8fafc;
+    }
+    .step-card p {
+      font-size: 13.5px;
+      color: #94a3b8;
+      line-height: 1.45;
+    }
+    .step-card code {
+      font-family: var(--font-mono);
+      font-size: 12px;
+      color: #e2e8f0;
+      background: #1e293b;
+      padding: 2px 6px;
+      border-radius: 4px;
+    }
+
+    /* Mutex & Replay Queue Section */
+    .queue-hub {
+      background: rgba(15, 23, 42, 0.85);
+      border: 1px solid rgba(56, 189, 248, 0.25);
+      border-radius: 12px;
+      padding: 14px 18px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+    }
+
+    .mutex-box {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .lock-icon {
+      font-size: 22px;
+    }
+    .mutex-info strong {
+      font-size: 14.5px;
+      color: var(--amber);
+      display: block;
+    }
+    .mutex-info span {
+      font-family: var(--font-mono);
+      font-size: 13px;
+      color: #cbd5e1;
+    }
+
+    .queue-slots {
+      display: flex;
+      gap: 8px;
+    }
+    .slot-item {
+      font-family: var(--font-mono);
+      font-size: 13px;
+      padding: 6px 12px;
+      border-radius: 6px;
+      background: #0f172a;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      color: #cbd5e1;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .slot-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+    }
+    .slot-dot.wait { background: var(--amber); animation: blink 1.2s infinite; }
+    .slot-dot.ok { background: var(--emerald); }
+
+    /* Code Pane */
+    .code-preview-pane {
+      background: #060a14;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 12px;
+      padding: 14px 18px;
+      font-family: var(--font-mono);
+      font-size: 14px;
+      line-height: 1.55;
+      color: #e2e8f0;
+    }
+    .kw { color: #f43f5e; font-weight: 700; }
+    .fn { color: #38bdf8; font-weight: 700; }
+    .str { color: #34d399; }
+    .prop { color: #c084fc; }
+    .comment { color: #64748b; font-style: italic; }
+
+    /* Footer */
+    .footer-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-family: var(--font-mono);
+      font-size: 13px;
+      color: #94a3b8;
+      padding-top: 10px;
+      border-top: 1px solid rgba(255, 255, 255, 0.06);
+    }
+
+    @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
+  </style>
+</head>
+<body>
+  <div class="stage-1080">
+    <div class="macos-window">
+      <!-- Titlebar -->
+      <div class="window-titlebar">
+        <div class="window-dots">
+          <span class="window-dot red"></span>
+          <span class="window-dot yellow"></span>
+          <span class="window-dot green"></span>
+        </div>
+        <div class="window-title">
+          <span>Angular Authentication</span>
+          <span class="badge">Silent Refresh &amp; 401 Mutex</span>
+        </div>
+        <div class="window-author">worldgyan.com · Ashutosh Kumar Choubey</div>
+      </div>
+
+      <!-- Main Content -->
+      <div class="window-content">
+        <!-- Hero Header -->
+        <div class="hero-strip">
+          <h1>Refresh Token Flow: <span>401 Interception</span></h1>
+          <div class="hero-pills">
+            <span class="pill pill-rose">Catch 401</span>
+            <span class="pill pill-cyan">Mutex Lock</span>
+            <span class="pill pill-emerald">Zero Re-Login</span>
+          </div>
+        </div>
+
+        <!-- 4-Step Architecture Flow -->
+        <div class="flow-canvas">
+          <div class="step-grid">
+            <!-- Step 1 -->
+            <div class="step-card" style="border-color: rgba(244, 63, 94, 0.4);">
+              <span class="step-badge badge-expired">Phase 01 · Expired</span>
+              <h3>401 Unauthorized</h3>
+              <p>Request with expired <code>JWT_1</code> fails on backend gateway with HTTP 401.</p>
+            </div>
+
+            <!-- Step 2 -->
+            <div class="step-card" style="border-color: rgba(251, 191, 36, 0.4);">
+              <span class="step-badge badge-catch">Phase 02 · Intercept</span>
+              <h3>Lock Mutex</h3>
+              <p><code>refreshTokenInterceptor</code> locks queue; holds concurrent requests in memory.</p>
+            </div>
+
+            <!-- Step 3 -->
+            <div class="step-card" style="border-color: rgba(168, 85, 247, 0.4);">
+              <span class="step-badge badge-refresh">Phase 03 · Refresh</span>
+              <h3>Silent Refresh</h3>
+              <p>Posts <code>refreshToken</code> to <code>/api/auth/refresh</code>; receives new <code>JWT_2</code>.</p>
+            </div>
+
+            <!-- Step 4 -->
+            <div class="step-card" style="border-color: rgba(52, 211, 153, 0.4);">
+              <span class="step-badge badge-replay">Phase 04 · Replay</span>
+              <h3>Replay Queue</h3>
+              <p>Clones failed request with <code>JWT_2</code>; user UI updates with 0ms interruption!</p>
+            </div>
+          </div>
+
+          <!-- Queue Concurrency Resolver -->
+          <div class="queue-hub">
+            <div class="mutex-box">
+              <span class="lock-icon">🔒</span>
+              <div class="mutex-info">
+                <strong>isRefreshing = true (Mutex Lock)</strong>
+                <span>Holds incoming parallel HTTP requests until token rotation completes</span>
+              </div>
+            </div>
+            <div class="queue-slots">
+              <div class="slot-item"><span class="slot-dot wait"></span> GET /orders (Queued)</div>
+              <div class="slot-item"><span class="slot-dot wait"></span> GET /profile (Queued)</div>
+              <div class="slot-item" style="border-color: var(--emerald);"><span class="slot-dot ok"></span> POST /refresh (Active)</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Functional Code Implementation -->
+        <div class="code-preview-pane">
+<span class="kw">export const</span> <span class="prop">refreshTokenInterceptor</span>: <span class="prop">HttpInterceptorFn</span> = (req, next) =&gt; {
+  <span class="kw">const</span> authService = <span class="fn">inject</span>(AuthService);
+  <span class="kw">return</span> <span class="fn">next</span>(req).<span class="fn">pipe</span>(
+    <span class="fn">catchError</span>((error: <span class="prop">HttpErrorResponse</span>) =&gt; {
+      <span class="kw">if</span> (error.status === <span class="str">401</span> &amp;&amp; !req.url.<span class="fn">includes</span>(<span class="str">'/auth/refresh'</span>)) {
+        <span class="kw">return</span> authService.<span class="fn">refreshToken</span>().<span class="fn">pipe</span>(
+          <span class="fn">switchMap</span>((newTokens) =&gt; {
+            <span class="kw">const</span> cloned = req.<span class="fn">clone</span>({ <span class="prop">setHeaders</span>: { <span class="prop">Authorization</span>: <span class="str">`Bearer ${newTokens.accessToken}`</span> } });
+            <span class="kw">return</span> <span class="fn">next</span>(cloned); <span class="comment">// Seamless automatic replay!</span>
+          })
+        );
+      }
+      <span class="kw">return</span> <span class="fn">throwError</span>(() =&gt; error);
+    })
+  );
+};
+        </div>
+
+        <!-- Footer -->
+        <div class="footer-bar">
+          <div>Resolution: <strong>switchMap + Mutex Token Subject</strong></div>
+          <div>Security: <strong>Zero LocalStorage Leakage</strong></div>
+          <div>worldgyan.com · Ashutosh Kumar Choubey</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>
+

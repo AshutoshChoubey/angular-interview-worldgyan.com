@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Zone.js O(N) vs Zoneless Signals O(1) — Angular Animation (1080x1080)</title>
+  <style>
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    :root {
+      --bg-canvas: #0f172a;
+      --bg-window: #0b1120;
+      --bg-header: #111827;
+      --border-slate: #1e293b;
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+      --rose: #ef4444;
+      --amber: #f59e0b;
+      --emerald: #10b981;
+      --cyan: #22d3ee;
+      --font-mono: 'JetBrains Mono', 'Fira Code', 'SFMono-Regular', Consolas, monospace;
+      --font-sans: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', Roboto, sans-serif;
+      --duration: 8s;
+    }
+
+    html, body {
+      width: 100%;
+      height: 100%;
+      background: #060913;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: var(--font-sans);
+      color: var(--text-main);
+      overflow: hidden;
+    }
+
+    .stage {
+      width: min(100vmin, 1080px);
+      height: min(100vmin, 1080px);
+      aspect-ratio: 1 / 1;
+      background: radial-gradient(circle at 80% 20%, #0f2942 0%, var(--bg-canvas) 62%);
+      padding: 4%;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      position: relative;
+    }
+
+    .mac-window {
+      width: 100%;
+      height: 100%;
+      background: var(--bg-window);
+      border: 1px solid #26334d;
+      border-radius: 20px;
+      box-shadow: 0 30px 80px rgba(0, 0, 0, 0.7), 0 0 40px rgba(16, 185, 129, 0.12);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .window-bar {
+      height: 54px;
+      background: var(--bg-header);
+      border-bottom: 1px solid var(--border-slate);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 22px;
+    }
+
+    .dots {
+      display: flex;
+      gap: 9px;
+    }
+    .dot { width: 13px; height: 13px; border-radius: 50%; }
+    .dot.red { background: #ff5f56; }
+    .dot.yellow { background: #ffbd2e; }
+    .dot.green { background: #27c93f; }
+
+    .win-title {
+      font-family: var(--font-mono);
+      font-size: 13px;
+      font-weight: 700;
+      color: #cbd5e1;
+    }
+
+    .win-badge {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      font-weight: 700;
+      color: #6ee7b7;
+      background: rgba(16, 185, 129, 0.16);
+      border: 1px solid rgba(16, 185, 129, 0.45);
+      padding: 4px 10px;
+      border-radius: 999px;
+    }
+
+    .window-content {
+      flex: 1;
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+      justify-content: space-between;
+    }
+
+    .split-grid {
+      flex: 1;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 18px;
+    }
+
+    .arch-card {
+      background: #090e1a;
+      border: 1px solid #1e293b;
+      border-radius: 14px;
+      padding: 18px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+
+    .arch-card.legacy { border-top: 4px solid var(--rose); }
+    .arch-card.modern { border-top: 4px solid var(--emerald); }
+
+    .card-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 8px;
+    }
+
+    .card-head h3 {
+      font-family: var(--font-mono);
+      font-size: 15px;
+      font-weight: 800;
+    }
+
+    .badge-red {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      font-weight: 700;
+      padding: 3px 8px;
+      border-radius: 6px;
+      background: rgba(239, 68, 68, 0.18);
+      color: #fca5a5;
+      border: 1px solid #ef4444;
+    }
+
+    .badge-green {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      font-weight: 700;
+      padding: 3px 8px;
+      border-radius: 6px;
+      background: rgba(16, 185, 129, 0.18);
+      color: #6ee7b7;
+      border: 1px solid #10b981;
+    }
+
+    .card-sub {
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-bottom: 12px;
+    }
+
+    /* Legacy Tree Sweep Animation */
+    .z-root { animation: sweepRoot var(--duration) infinite; }
+    .z-mid { animation: sweepMid var(--duration) infinite; }
+    .z-leaf { animation: sweepLeaf var(--duration) infinite; }
+
+    /* Modern Pinpoint Signal Animation */
+    .s-wire {
+      stroke-dasharray: 16 280;
+      animation: signalDirectWire var(--duration) infinite;
+    }
+    .s-target { animation: signalTargetGlow var(--duration) infinite; }
+
+    .code-footer {
+      background: #080c17;
+      border: 1px solid #1e293b;
+      border-radius: 12px;
+      padding: 14px 18px;
+      font-family: var(--font-mono);
+      font-size: 13px;
+      color: #cbd5e1;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .kw { color: #c084fc; font-weight: 700; }
+    .fn { color: #38bdf8; }
+
+    @keyframes sweepRoot {
+      0%, 10% { fill: #111827; stroke: #334155; }
+      15%, 45% { fill: #451a1a; stroke: #ef4444; }
+      55%, 100% { fill: #111827; stroke: #334155; }
+    }
+    @keyframes sweepMid {
+      0%, 22% { fill: #111827; stroke: #334155; }
+      28%, 55% { fill: #451a1a; stroke: #f59e0b; }
+      65%, 100% { fill: #111827; stroke: #334155; }
+    }
+    @keyframes sweepLeaf {
+      0%, 35% { fill: #111827; stroke: #334155; }
+      40%, 70% { fill: #451a1a; stroke: #ef4444; }
+      80%, 100% { fill: #111827; stroke: #334155; }
+    }
+
+    @keyframes signalDirectWire {
+      0%, 12% { stroke-dashoffset: 280; opacity: 0; }
+      18% { opacity: 1; }
+      42% { stroke-dashoffset: 0; opacity: 1; }
+      75%, 100% { stroke-dashoffset: 0; opacity: 0; }
+    }
+
+    @keyframes signalTargetGlow {
+      0%, 36% { fill: #111827; stroke: #334155; }
+      40%, 82% { fill: #064e3b; stroke: #10b981; }
+      90%, 100% { fill: #111827; stroke: #334155; }
+    }
+  </style>
+</head>
+<body>
+  <div class="stage">
+    <div class="mac-window">
+      <div class="window-bar">
+        <div class="dots">
+          <span class="dot red"></span>
+          <span class="dot yellow"></span>
+          <span class="dot green"></span>
+        </div>
+        <span class="win-title">https://worldgyan.com/courses/angular-architecture</span>
+        <span class="win-badge">Zoneless O(1)</span>
+      </div>
+
+      <div class="window-content">
+        <div style="background:#0b1325;border:1px solid #1e293b;border-radius:10px;padding:10px 16px;display:flex;flex-direction:column;gap:3px;">
+          <div style="font-size:16px;font-weight:800;color:#ffffff;">Angular Signal Part 4: Legacy Zone.js O(N) Sweep vs Zoneless Signals O(1) Patch</div>
+          <div style="font-family:var(--font-mono);font-size:11px;color:#94a3b8;">Why Zoneless + Signals skips top-down component tree sweeps</div>
+        </div>
+        <div class="split-grid">
+          <!-- Left: Legacy Zone.js -->
+          <div class="arch-card legacy">
+            <div>
+              <div class="card-head">
+                <h3>Legacy Zone.js</h3>
+                <span class="badge-red">O(N) Tree Sweep</span>
+              </div>
+              <p class="card-sub">Every async event checks the entire component tree top-down.</p>
+            </div>
+
+            <svg viewBox="0 0 360 320" fill="none">
+              <line x1="180" y1="65" x2="100" y2="145" stroke="#475569" stroke-width="2.5" />
+              <line x1="180" y1="65" x2="260" y2="145" stroke="#475569" stroke-width="2.5" />
+              <line x1="100" y1="185" x2="65" y2="255" stroke="#475569" stroke-width="2.5" />
+              <line x1="100" y1="185" x2="145" y2="255" stroke="#475569" stroke-width="2.5" />
+              <line x1="260" y1="185" x2="260" y2="255" stroke="#475569" stroke-width="2.5" />
+
+              <rect class="z-root" x="100" y="25" width="160" height="44" rx="8" stroke-width="2" />
+              <text x="180" y="52" text-anchor="middle" fill="#f8fafc" font-family="monospace" font-size="11.5" font-weight="700">AppRoot [Check]</text>
+
+              <rect class="z-mid" x="40" y="140" width="120" height="44" rx="8" stroke-width="2" />
+              <text x="100" y="167" text-anchor="middle" fill="#f8fafc" font-family="monospace" font-size="12" font-weight="700">Header [Check]</text>
+
+              <rect class="z-mid" x="200" y="140" width="120" height="44" rx="8" stroke-width="2" />
+              <text x="260" y="167" text-anchor="middle" fill="#f8fafc" font-family="monospace" font-size="12" font-weight="700">Courses [Check]</text>
+
+              <rect class="z-leaf" x="15" y="250" width="95" height="42" rx="8" stroke-width="2" />
+              <text x="62" y="275" text-anchor="middle" fill="#fca5a5" font-family="monospace" font-size="11">Nav [Check]</text>
+
+              <rect class="z-leaf" x="120" y="250" width="95" height="42" rx="8" stroke-width="2" />
+              <text x="167" y="275" text-anchor="middle" fill="#fca5a5" font-family="monospace" font-size="11">Sidebar [Check]</text>
+
+              <rect class="z-leaf" x="225" y="250" width="115" height="42" rx="8" stroke-width="2" />
+              <text x="282" y="275" text-anchor="middle" fill="#fde047" font-family="monospace" font-size="11" font-weight="700">Signal [Updated]</text>
+            </svg>
+          </div>
+
+          <!-- Right: Zoneless Signals -->
+          <div class="arch-card modern">
+            <div>
+              <div class="card-head">
+                <h3>Zoneless Signals</h3>
+                <span class="badge-green">O(1) Pinpoint</span>
+              </div>
+              <p class="card-sub">Untouched components sleep. Signal mutates only the bound view!</p>
+            </div>
+
+            <svg viewBox="0 0 360 320" fill="none">
+              <line x1="180" y1="65" x2="100" y2="145" stroke="#1e293b" stroke-width="2" />
+              <line x1="180" y1="65" x2="260" y2="145" stroke="#1e293b" stroke-width="2" />
+              <line x1="100" y1="185" x2="65" y2="255" stroke="#1e293b" stroke-width="2" />
+              <line x1="100" y1="185" x2="145" y2="255" stroke="#1e293b" stroke-width="2" />
+              <line x1="260" y1="185" x2="260" y2="255" stroke="#1e293b" stroke-width="2" />
+
+              <!-- Direct Signal Wire -->
+              <path class="s-wire" d="M 280 45 C 345 110, 340 190, 285 250" stroke="#10b981" stroke-width="4" stroke-dasharray="6 6" />
+
+              <rect x="100" y="25" width="160" height="44" rx="8" fill="#0f172a" stroke="#1e293b" stroke-width="2" />
+              <text x="180" y="52" text-anchor="middle" fill="#64748b" font-family="monospace" font-size="11.5">AppRoot (Idle)</text>
+
+              <rect x="40" y="140" width="120" height="44" rx="8" fill="#0f172a" stroke="#1e293b" stroke-width="2" />
+              <text x="100" y="167" text-anchor="middle" fill="#64748b" font-family="monospace" font-size="12">Header (Idle)</text>
+
+              <rect x="200" y="140" width="120" height="44" rx="8" fill="#0f172a" stroke="#1e293b" stroke-width="2" />
+              <text x="260" y="167" text-anchor="middle" fill="#64748b" font-family="monospace" font-size="12">Courses (Idle)</text>
+
+              <rect x="15" y="250" width="95" height="42" rx="8" fill="#0f172a" stroke="#1e293b" stroke-width="2" />
+              <text x="62" y="275" text-anchor="middle" fill="#475569" font-family="monospace" font-size="11">Nav (Idle)</text>
+
+              <rect x="120" y="250" width="95" height="42" rx="8" fill="#0f172a" stroke="#1e293b" stroke-width="2" />
+              <text x="167" y="275" text-anchor="middle" fill="#475569" font-family="monospace" font-size="11">Sidebar (Idle)</text>
+
+              <rect class="s-target" x="225" y="250" width="115" height="42" rx="8" fill="#111827" stroke="#10b981" stroke-width="2.5" />
+              <text x="282" y="275" text-anchor="middle" fill="#6ee7b7" font-family="monospace" font-size="11" font-weight="800">⚡ Signal [O(1)]</text>
+            </svg>
+          </div>
+        </div>
+
+        <div class="code-footer">
+          <span><span class="kw">export const</span> appConfig = { providers: [<span class="fn">provideZonelessChangeDetection</span>()] };</span>
+          <span style="color:#94a3b8;font-size:12px;">Ashutosh Kumar Choubey</span>
+        </div>
+      </div>
+    </div>
+  </div>
+  <style>
+    html.res-4k body {
+      overflow: auto;
+      justify-content: flex-start;
+      align-items: flex-start;
+    }
+    html.res-4k .stage-1080 {
+      transform: scale(3.5555556) !important;
+      transform-origin: top left !important;
+      margin-bottom: 2760px;
+      margin-right: 2760px;
+    }
+  </style>
+  <script>
+    if (new URLSearchParams(location.search).get("res") === "4k") document.documentElement.classList.add("res-4k");
+  </script>
+</body>
+</html>
+

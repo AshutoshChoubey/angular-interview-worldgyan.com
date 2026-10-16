@@ -7,3 +7,10 @@
 - Maintain the modular directory layout (`<topic>/README.md`, `<topic>/examples/*.ts`).
 - Always keep the root `README.md` roadmap and navigation up to date.
 - All additions should be committed and pushed to `origin main`.
+
+## 🎬 macOS Shorts Studio & 4K Animation Invariants (Typography & Exporter)
+- Every animation HTML file in `animations/` must have an explicit mapping in `export-4k.js` with zero fallbacks to `"computed"`.
+- Typography standards: Min `24px`–`26px` bold headers, min `16px`–`18px` bold card titles, min `14px` code blocks, min `13px` descriptions.
+- Synchronize all standalone animations and `export-4k.js` with `worldgyan1/public/animations/`.
+
+

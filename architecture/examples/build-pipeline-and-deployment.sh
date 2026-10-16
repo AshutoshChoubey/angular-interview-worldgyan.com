@@ -51,3 +51,4 @@ EOF
 
 echo "✅ Nginx configuration generated: nginx-angular-spa.conf"
 echo "🚀 Deployment pipeline ready."
+
