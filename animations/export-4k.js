@@ -123,6 +123,7 @@
   };
 
   function getSceneKey(sceneName) {
+    if (sceneName.includes("change-detection") || sceneName.includes("rendering") || sceneName.includes("paint") || (sceneName.includes("pipeline") && !sceneName.includes("interceptor"))) return "change-detection";
     if (sceneName.includes("interceptor")) return "interceptor-pipeline";
     if (sceneName.includes("refresh-token")) return "refresh-token-flow";
     if (sceneName.includes("oauth2") || sceneName.includes("pkce")) return "oauth2-pkce-flow";
@@ -2094,6 +2095,158 @@
     ctx.fillText("Ashutosh Kumar Choubey", 1012, 994);
   }
 
+  function drawChangeDetectionScene(ctx, t, skipOuterBg) {
+    drawMacShell(ctx, "Change Detection & Paint", t, skipOuterBg);
+
+    // Top Header Banner
+    roundRect(ctx, 68, 114, 944, 82, 14);
+    ctx.fillStyle = "#111c33";
+    ctx.fill();
+    ctx.strokeStyle = "#1e293b";
+    ctx.lineWidth = 1;
+    ctx.stroke();
+
+    ctx.textAlign = "left";
+    ctx.font = "800 13px 'JetBrains Mono', monospace";
+    ctx.fillStyle = "#38bdf8";
+    ctx.fillText("ANGULAR 22 RUNTIME ARCHITECTURE · 60FPS / ZERO ZONE.JS", 92, 142);
+    ctx.font = "800 24px -apple-system, sans-serif";
+    ctx.fillStyle = "#ffffff";
+    ctx.fillText("Change Detection & Browser Painting Pipeline", 92, 172);
+
+    const activeStep = Math.floor((t * 4) % 4);
+
+    // 4 Pipeline Step Cards
+    const steps = [
+      { num: "01", name: "Trigger Event", sub: "signal.set() / WS", desc: "Push dirty flag downstream", status: "● Producer Stale", col: "#38bdf8", bg: "rgba(56,189,248,0.14)" },
+      { num: "02", name: "Angular CD", sub: "Zoneless Scheduler", desc: "Microtask O(1) view refresh", status: "● Scheduler Batch", col: "#c084fc", bg: "rgba(192,132,252,0.14)" },
+      { num: "03", name: "DOM Patch", sub: "Scoped [_ngcontent]", desc: "Ivy & Renderer2 updates", status: "● Emulated Scope", col: "#fbbf24", bg: "rgba(251,191,36,0.14)" },
+      { num: "04", name: "Browser Paint", sub: "Reflow & Composite", desc: "GPU hardware rasterization", status: "● 60 FPS Composite", col: "#34d399", bg: "rgba(52,211,153,0.14)" },
+    ];
+
+    steps.forEach((s, i) => {
+      const cx = 68 + i * 242;
+      roundRect(ctx, cx, 206, 226, 172, 12);
+      ctx.fillStyle = i === activeStep ? "#132142" : "#090e1c";
+      ctx.fill();
+      ctx.strokeStyle = i === activeStep ? s.col : "#1e293b";
+      ctx.lineWidth = i === activeStep ? 2 : 1;
+      ctx.stroke();
+
+      roundRect(ctx, cx + 12, 218, 58, 20, 5);
+      ctx.fillStyle = s.bg;
+      ctx.fill();
+      ctx.font = "800 11px 'JetBrains Mono', monospace";
+      ctx.fillStyle = s.col;
+      ctx.fillText("STEP " + s.num, cx + 18, 232);
+
+      ctx.font = "800 17px -apple-system, sans-serif";
+      ctx.fillStyle = "#ffffff";
+      ctx.fillText(s.name, cx + 12, 264);
+
+      ctx.font = "700 12.5px 'JetBrains Mono', monospace";
+      ctx.fillStyle = "#94a3b8";
+      ctx.fillText(s.sub, cx + 12, 288);
+
+      ctx.font = "500 12.5px -apple-system, sans-serif";
+      ctx.fillStyle = "#cbd5e1";
+      ctx.fillText(s.desc, cx + 12, 320, 202);
+
+      // Status Indicator
+      roundRect(ctx, cx + 12, 338, 202, 26, 6);
+      ctx.fillStyle = i === activeStep ? "rgba(0,0,0,0.55)" : "rgba(0,0,0,0.3)";
+      ctx.fill();
+      ctx.font = "700 11.5px 'JetBrains Mono', monospace";
+      ctx.fillStyle = s.col;
+      ctx.fillText(s.status, cx + 22, 355);
+
+      if (i < 3) {
+        ctx.font = "800 18px 'JetBrains Mono', monospace";
+        ctx.fillStyle = i === activeStep ? s.col : "#475569";
+        ctx.fillText("➔", cx + 228, 292);
+      }
+    });
+
+    // Middle Comparison Box: Strategy Matrix
+    roundRect(ctx, 68, 390, 944, 156, 12);
+    ctx.fillStyle = "#0c1527";
+    ctx.fill();
+    ctx.strokeStyle = "#1e293b";
+    ctx.lineWidth = 1;
+    ctx.stroke();
+
+    ctx.font = "800 13px 'JetBrains Mono', monospace";
+    ctx.fillStyle = "#38bdf8";
+    ctx.fillText("CHANGE DETECTION STRATEGY MATRIX (ANGULAR 22)", 92, 416);
+
+    const matrixRows = [
+      { name: "Default (Legacy)", desc: "Zone.js full-tree sweep on all async events", cost: "O(N) All Views Checked", col: "#f43f5e" },
+      { name: "OnPush", desc: "Skips unmutated subtrees; checks dirty paths", cost: "O(K) Subtree Pruned", col: "#fbbf24" },
+      { name: "Zoneless + Signals", desc: "Reactive graph microtask; zero Zone.js polyfill", cost: "O(1) Direct Refresh", col: "#34d399" },
+    ];
+
+    matrixRows.forEach((r, idx) => {
+      const ry = 444 + idx * 32;
+      ctx.font = "800 14px 'JetBrains Mono', monospace";
+      ctx.fillStyle = r.col;
+      ctx.fillText(r.name, 92, ry);
+
+      ctx.font = "500 13px -apple-system, sans-serif";
+      ctx.fillStyle = "#cbd5e1";
+      ctx.fillText(r.desc, 320, ry);
+
+      ctx.textAlign = "right";
+      ctx.font = "800 13px 'JetBrains Mono', monospace";
+      ctx.fillStyle = r.col;
+      ctx.fillText(r.cost, 988, ry);
+      ctx.textAlign = "left";
+    });
+
+    // Bottom Code Preview Pane
+    roundRect(ctx, 68, 558, 944, 386, 12);
+    ctx.fillStyle = "#070c17";
+    ctx.fill();
+    ctx.strokeStyle = "#1e293b";
+    ctx.lineWidth = 1;
+    ctx.stroke();
+
+    ctx.font = "800 12.5px 'JetBrains Mono', monospace";
+    ctx.fillStyle = "#94a3b8";
+    ctx.fillText("// app.config.ts & Modern OnPush Signal Ticker", 92, 584);
+
+    const codeLines = [
+      { text: "// 1. app.config.ts — Stable Zoneless Bootstrapping", col: "#64748b" },
+      { text: "export const appConfig: ApplicationConfig = {", col: "#f8fafc" },
+      { text: "  providers: [ provideZonelessChangeDetection() ] // -15kB bundle savings", col: "#38bdf8" },
+      { text: "};", col: "#f8fafc" },
+      { text: "", col: "#64748b" },
+      { text: "// 2. High-Performance OnPush Component with Signal Reactivity", col: "#64748b" },
+      { text: "@Component({", col: "#c084fc" },
+      { text: "  standalone: true,", col: "#f8fafc" },
+      { text: "  changeDetection: ChangeDetectionStrategy.OnPush,", col: "#fbbf24" },
+      { text: "  template: `<h2>Price: {{ price() }}</h2>`", col: "#34d399" },
+      { text: "})", col: "#c084fc" },
+      { text: "export class StockTickerComponent {", col: "#f8fafc" },
+      { text: "  readonly price = toSignal(wsStream$.pipe(throttleTime(60)));", col: "#38bdf8" },
+      { text: "}", col: "#f8fafc" },
+    ];
+
+    codeLines.forEach((ln, lIdx) => {
+      ctx.font = "14px 'JetBrains Mono', monospace";
+      ctx.fillStyle = ln.col;
+      ctx.fillText(ln.text, 92, 616 + lIdx * 22);
+    });
+
+    // Footer
+    ctx.font = "700 13px 'JetBrains Mono', monospace";
+    ctx.fillStyle = "#94a3b8";
+    ctx.fillText("Strategy: OnPush + Zoneless | Scope: Emulated | 60 FPS Target", 68, 974);
+    ctx.textAlign = "right";
+    ctx.fillStyle = "#38bdf8";
+    ctx.fillText("worldgyan.com · Ashutosh Kumar Choubey", 1012, 974);
+    ctx.textAlign = "left";
+  }
+
   function drawCore1080Scene(ctx, sceneKey, normTime, skipOuterBg) {
     ctx.save();
     if (skipOuterBg) {
@@ -2104,6 +2257,8 @@
     }
     if (sceneKey === "interceptor-pipeline") {
       drawInterceptorPipelineScene(ctx, normTime, skipOuterBg);
+    } else if (sceneKey === "change-detection") {
+      drawChangeDetectionScene(ctx, normTime, skipOuterBg);
     } else if (sceneKey === "refresh-token-flow") {
       drawRefreshTokenFlowScene(ctx, normTime, skipOuterBg);
     } else if (sceneKey === "oauth2-pkce-flow") {

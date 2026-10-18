@@ -1,0 +1,488 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Angular 22 Change Detection &amp; Browser Paint Pipeline (1080x1080 macOS Animation)</title>
+  <style>
+    :root {
+      --bg-outer: #060a14;
+      --slate-bg: #0f172a;
+      --slate-deep: #090e1c;
+      --slate-card: #111c33;
+      --slate-border: #1e293b;
+      --slate-muted: #94a3b8;
+      --text-main: #f8fafc;
+      --text-secondary: #cbd5e1;
+      --cyan: #38bdf8;
+      --emerald: #34d399;
+      --purple: #c084fc;
+      --amber: #fbbf24;
+      --rose: #f43f5e;
+      --red-dot: #ff5f56;
+      --yellow-dot: #ffbd2e;
+      --green-dot: #27c93f;
+      --font-sans: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', Roboto, sans-serif;
+      --font-mono: 'JetBrains Mono', 'Fira Code', Consolas, monospace;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html, body {
+      width: 100%;
+      height: 100%;
+      background: var(--bg-outer);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: var(--font-sans);
+      color: var(--text-main);
+      overflow: hidden;
+    }
+
+    .stage-1080 {
+      width: 1080px;
+      height: 1080px;
+      min-width: 1080px;
+      min-height: 1080px;
+      background:
+        radial-gradient(circle at 20% 20%, rgba(56, 189, 248, 0.16) 0%, transparent 45%),
+        radial-gradient(circle at 80% 80%, rgba(192, 132, 252, 0.16) 0%, transparent 45%),
+        var(--slate-bg);
+      padding: 40px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+    }
+
+    .stage-1080::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background-image:
+        linear-gradient(to right, rgba(56, 189, 248, 0.04) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(56, 189, 248, 0.04) 1px, transparent 1px);
+      background-size: 36px 36px;
+      pointer-events: none;
+    }
+
+    .macos-window {
+      width: 1000px;
+      height: 1000px;
+      background: rgba(9, 14, 28, 0.98);
+      border: 1.5px solid rgba(56, 189, 248, 0.35);
+      border-radius: 20px;
+      box-shadow: 0 32px 80px rgba(0, 0, 0, 0.85), 0 0 40px rgba(56, 189, 248, 0.14);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      position: relative;
+      z-index: 2;
+    }
+
+    .window-titlebar {
+      height: 56px;
+      background: #0d1527;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 22px;
+    }
+
+    .window-dots {
+      display: flex;
+      gap: 8px;
+    }
+    .window-dot { width: 12px; height: 12px; border-radius: 50%; }
+    .window-dot.red { background: var(--red-dot); }
+    .window-dot.yellow { background: var(--yellow-dot); }
+    .window-dot.green { background: var(--green-dot); }
+
+    .window-title {
+      font-family: var(--font-mono);
+      font-size: 13.5px;
+      font-weight: 700;
+      color: var(--cyan);
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+    }
+
+    .window-badge {
+      font-size: 13px;
+      font-weight: 700;
+      color: #94a3b8;
+      background: rgba(148, 163, 184, 0.12);
+      padding: 5px 12px;
+      border-radius: 6px;
+      border: 1px solid rgba(148, 163, 184, 0.22);
+    }
+
+    .window-body {
+      flex: 1;
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+    }
+
+    /* Hero Header */
+    .hero-banner {
+      background: linear-gradient(135deg, rgba(17, 28, 51, 0.95), rgba(9, 14, 28, 0.95));
+      border: 1px solid rgba(56, 189, 248, 0.28);
+      border-radius: 14px;
+      padding: 16px 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .hero-kicker {
+      font-family: var(--font-mono);
+      font-size: 13px;
+      font-weight: 800;
+      color: var(--cyan);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      margin-bottom: 4px;
+      display: block;
+    }
+
+    .hero-title {
+      font-size: 24px;
+      font-weight: 800;
+      color: #ffffff;
+      letter-spacing: -0.02em;
+    }
+
+    .hero-pill {
+      font-family: var(--font-mono);
+      font-size: 13px;
+      font-weight: 800;
+      background: rgba(52, 211, 153, 0.16);
+      color: var(--emerald);
+      border: 1px solid rgba(52, 211, 153, 0.35);
+      padding: 6px 14px;
+      border-radius: 999px;
+    }
+
+    /* 4-Step Pipeline Grid */
+    .pipeline-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
+      position: relative;
+    }
+
+    .step-card {
+      background: #0b1222;
+      border: 1px solid #1e293b;
+      border-radius: 12px;
+      padding: 16px 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      transition: all 0.4s ease;
+      position: relative;
+    }
+
+    .step-card.active {
+      background: #111d38;
+      border-color: var(--cyan);
+      box-shadow: 0 0 24px rgba(56, 189, 248, 0.25);
+    }
+
+    .step-badge {
+      font-family: var(--font-mono);
+      font-size: 12.5px;
+      font-weight: 800;
+      padding: 3px 8px;
+      border-radius: 4px;
+      display: inline-block;
+      width: fit-content;
+    }
+
+    .step-title {
+      font-size: 16.5px;
+      font-weight: 800;
+      color: #ffffff;
+      line-height: 1.25;
+    }
+
+    .step-sub {
+      font-family: var(--font-mono);
+      font-size: 13px;
+      color: #94a3b8;
+    }
+
+    .step-detail {
+      font-size: 13px;
+      color: #cbd5e1;
+      line-height: 1.4;
+    }
+
+    .status-indicator {
+      margin-top: auto;
+      font-family: var(--font-mono);
+      font-size: 12.5px;
+      font-weight: 700;
+      padding: 5px 8px;
+      border-radius: 6px;
+      background: rgba(0, 0, 0, 0.4);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    /* Comparison Box (Default vs OnPush vs Zoneless) */
+    .strategy-matrix {
+      background: #0b1222;
+      border: 1px solid #1e293b;
+      border-radius: 12px;
+      padding: 16px 18px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .matrix-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid #1e293b;
+      padding-bottom: 8px;
+    }
+
+    .matrix-title {
+      font-family: var(--font-mono);
+      font-size: 13.5px;
+      font-weight: 800;
+      color: var(--cyan);
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+    }
+
+    .matrix-row {
+      display: grid;
+      grid-template-columns: 140px 1fr 1fr;
+      gap: 12px;
+      align-items: center;
+      font-size: 13.5px;
+      padding: 6px 0;
+    }
+
+    .matrix-row.highlight {
+      background: rgba(56, 189, 248, 0.06);
+      border-radius: 6px;
+      padding: 6px 8px;
+    }
+
+    .matrix-tag {
+      font-family: var(--font-mono);
+      font-weight: 800;
+      font-size: 13px;
+    }
+
+    /* Code Preview Pane */
+    .code-preview-pane {
+      background: #080d1a;
+      border: 1px solid #1e293b;
+      border-radius: 12px;
+      padding: 16px 20px;
+      font-family: var(--font-mono);
+      font-size: 14px;
+      line-height: 1.55;
+      color: #e2e8f0;
+      white-space: pre;
+      overflow-x: auto;
+    }
+
+    .kw { color: #f43f5e; font-weight: 700; }
+    .fn { color: #38bdf8; font-weight: 700; }
+    .prop { color: #c084fc; }
+    .str { color: #34d399; }
+    .comment { color: #64748b; font-style: italic; }
+
+    /* Footer */
+    .footer-bar {
+      height: 48px;
+      border-top: 1px solid #1e293b;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 6px;
+      font-family: var(--font-mono);
+      font-size: 13px;
+      color: #94a3b8;
+    }
+
+    .footer-left {
+      display: flex;
+      gap: 18px;
+    }
+
+    .footer-left strong {
+      color: #ffffff;
+    }
+  </style>
+</head>
+<body>
+  <div class="stage-1080">
+    <div class="macos-window">
+      <!-- Titlebar -->
+      <div class="window-titlebar">
+        <div class="window-dots">
+          <span class="window-dot red"></span>
+          <span class="window-dot yellow"></span>
+          <span class="window-dot green"></span>
+        </div>
+        <span class="window-title">Angular 22 Engine · Change Detection &amp; Browser Paint</span>
+        <span class="window-badge">O(1) Zoneless Signals</span>
+      </div>
+
+      <!-- Body -->
+      <div class="window-body">
+        <!-- Hero Header -->
+        <div class="hero-banner">
+          <div>
+            <span class="hero-kicker">ANGULAR 22 RUNTIME ARCHITECTURE</span>
+            <h1 class="hero-title">Change Detection &amp; Browser Painting Pipeline</h1>
+          </div>
+          <span class="hero-pill">⚡ 60FPS / Zero Zone.js</span>
+        </div>
+
+        <!-- 4-Step Pipeline Cards -->
+        <div class="pipeline-grid" id="pipeline-cards">
+          <!-- Step 1 -->
+          <div class="step-card active" id="card-0">
+            <span class="step-badge" style="background: rgba(56, 189, 248, 0.16); color: #38bdf8;">STEP 01</span>
+            <div class="step-title">Trigger Event</div>
+            <div class="step-sub">signal.set() / WS</div>
+            <div class="step-detail">Signal update or WebSocket message arrives; pushes dirty notification.</div>
+            <div class="status-indicator" style="color: #38bdf8;">
+              <span class="dot">●</span> <span>Producer Stale</span>
+            </div>
+          </div>
+
+          <!-- Step 2 -->
+          <div class="step-card" id="card-1">
+            <span class="step-badge" style="background: rgba(192, 132, 252, 0.16); color: #c084fc;">STEP 02</span>
+            <div class="step-title">Angular CD</div>
+            <div class="step-sub">Zoneless Scheduler</div>
+            <div class="step-detail">Microtask schedules view; OnPush checks only dirty signal paths.</div>
+            <div class="status-indicator" style="color: #c084fc;">
+              <span class="dot">●</span> <span>O(1) View Mark</span>
+            </div>
+          </div>
+
+          <!-- Step 3 -->
+          <div class="step-card" id="card-2">
+            <span class="step-badge" style="background: rgba(251, 191, 36, 0.16); color: #fbbf24;">STEP 03</span>
+            <div class="step-title">DOM Patch</div>
+            <div class="step-sub">Scoped [_ngcontent]</div>
+            <div class="step-detail">Renderer2 &amp; Ivy instructions mutate scoped DOM nodes safely.</div>
+            <div class="status-indicator" style="color: #fbbf24;">
+              <span class="dot">●</span> <span>Emulated Scope</span>
+            </div>
+          </div>
+
+          <!-- Step 4 -->
+          <div class="step-card" id="card-3">
+            <span class="step-badge" style="background: rgba(52, 211, 153, 0.16); color: #34d399;">STEP 04</span>
+            <div class="step-title">Browser Paint</div>
+            <div class="step-sub">Reflow &amp; Composite</div>
+            <div class="step-detail">CSSOM recalculated, Render Tree reflowed, GPU paints bitmap pixels.</div>
+            <div class="status-indicator" style="color: #34d399;">
+              <span class="dot">●</span> <span>60 FPS Composite</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Strategy Matrix -->
+        <div class="strategy-matrix">
+          <div class="matrix-header">
+            <span class="matrix-title">Change Detection Strategy vs Render Cost</span>
+            <span style="font-family: var(--font-mono); font-size: 13px; color: #94a3b8;">Angular 22 Runtime Matrix</span>
+          </div>
+
+          <div class="matrix-row">
+            <span class="matrix-tag" style="color: #f43f5e;">Default (Legacy)</span>
+            <span style="color: #94a3b8;">Zone.js full-tree sweep on every async event</span>
+            <span style="color: #f43f5e; font-family: var(--font-mono); font-weight: 700;">O(N) All Views Checked</span>
+          </div>
+
+          <div class="matrix-row">
+            <span class="matrix-tag" style="color: #fbbf24;">OnPush</span>
+            <span style="color: #cbd5e1;">Skips unmutated subtrees; checks dirty paths</span>
+            <span style="color: #fbbf24; font-family: var(--font-mono); font-weight: 700;">O(K) Subtree Pruned</span>
+          </div>
+
+          <div class="matrix-row highlight">
+            <span class="matrix-tag" style="color: #34d399;">Zoneless + Signals</span>
+            <span style="color: #ffffff; font-weight: 600;">Reactive graph microtask; zero Zone.js polyfill</span>
+            <span style="color: #34d399; font-family: var(--font-mono); font-weight: 700;">O(1) Direct Node Refresh</span>
+          </div>
+        </div>
+
+        <!-- Code Preview -->
+        <div class="code-preview-pane">
+<span class="comment">// 1. app.config.ts — Stable Zoneless Bootstrapping</span>
+<span class="kw">export const</span> <span class="prop">appConfig</span>: <span class="prop">ApplicationConfig</span> = {
+  <span class="prop">providers</span>: [
+    <span class="fn">provideZonelessChangeDetection</span>() <span class="comment">// Eliminates zone.js (-15kB)</span>
+  ]
+};
+
+<span class="comment">// 2. High-Performance OnPush Component with Signal Reactivity</span>
+<span class="prop">@Component</span>({
+  <span class="prop">standalone</span>: <span class="kw">true</span>,
+  <span class="prop">changeDetection</span>: <span class="prop">ChangeDetectionStrategy</span>.<span class="prop">OnPush</span>,
+  <span class="prop">template</span>: <span class="str">`&lt;h2&gt;Price: {{ price() }}&lt;/h2&gt;`</span>
+})
+<span class="kw">export class</span> <span class="prop">StockTickerComponent</span> {
+  <span class="kw">readonly</span> <span class="prop">price</span> = <span class="fn">toSignal</span>(<span class="prop">wsStream$</span>.<span class="fn">pipe</span>(<span class="fn">throttleTime</span>(60)));
+}
+        </div>
+
+        <!-- Footer -->
+        <div class="footer-bar">
+          <div class="footer-left">
+            <span>Strategy: <strong>OnPush + Zoneless</strong></span>
+            <span>Encapsulation: <strong>Emulated (_ngcontent)</strong></span>
+            <span>Target: <strong>Sub-16ms Paint Budget</strong></span>
+          </div>
+          <div>worldgyan.com · Ashutosh Kumar Choubey</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Live cyclic step progression with URL param override
+    let currentStep = 0;
+    const cards = [
+      document.getElementById('card-0'),
+      document.getElementById('card-1'),
+      document.getElementById('card-2'),
+      document.getElementById('card-3')
+    ];
+
+    const urlParams = new URLSearchParams(window.location.search);
+    const fixedStep = urlParams.get('step');
+    if (fixedStep !== null) {
+      const stepNum = parseInt(fixedStep, 10);
+      cards.forEach((c, idx) => {
+        if (c) c.classList.toggle('active', idx === stepNum);
+      });
+    } else {
+      setInterval(() => {
+        cards.forEach((c, idx) => {
+          if (c) c.classList.toggle('active', idx === currentStep);
+        });
+        currentStep = (currentStep + 1) % 4;
+      }, 1800);
+    }
+  </script>
+</body>
+</html>

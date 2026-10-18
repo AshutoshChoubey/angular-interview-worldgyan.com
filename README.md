@@ -58,6 +58,37 @@ Functional `HttpInterceptorFn`, request/response onion-pipeline execution order,
 
 ---
 
+### 4. ⚡ [Change Detection, View Encapsulation & Browser Painting Pipeline (`change-detection/`)](change-detection/README.md)
+Default vs OnPush, `provideZonelessChangeDetection()`, Push-Pull Signal reactive graph, continuous high-frequency WebSockets, unsubscription standards (`toSignal`, `takeUntilDestroyed`), component communication, `ViewEncapsulation` (Emulated, ShadowDom, None) CSS scoping rules, and step-by-step browser paint lifecycle.
+
+- 📖 **Study Guide**: [`change-detection/README.md`](change-detection/README.md) (or [`change-detection/angular-change-detection-rendering-guide.md`](change-detection/angular-change-detection-rendering-guide.md))
+- 💻 **Practical Examples**:
+  - [`change-detection/examples/01-default-vs-onpush.ts`](change-detection/examples/01-default-vs-onpush.ts) — Default vs OnPush, shallow reference equality, immutable updates, and `detach()`.
+  - [`change-detection/examples/02-zoneless-change-detection.ts`](change-detection/examples/02-zoneless-change-detection.ts) — `provideZonelessChangeDetection()`, microtask scheduling, and Zoneless timers.
+  - [`change-detection/examples/03-signals-reactive-graph.ts`](change-detection/examples/03-signals-reactive-graph.ts) — Push-Pull reactive dependency graph and Diamond Problem resolution.
+  - [`change-detection/examples/04-continuous-streams-websocket.ts`](change-detection/examples/04-continuous-streams-websocket.ts) — High-frequency WebSocket ticker with RxJS throttling and `toSignal()`.
+  - [`change-detection/examples/05-parent-child-adjacent-communication.ts`](change-detection/examples/05-parent-child-adjacent-communication.ts) — Modern `input()`, `output()`, and root shared signal stores.
+  - [`change-detection/examples/06-view-encapsulation-css-scoping.ts`](change-detection/examples/06-view-encapsulation-css-scoping.ts) — Emulated vs ShadowDom, `:host`, and CSS variable inheritance.
+  - [`change-detection/examples/07-browser-paint-lifecycle-benchmark.ts`](change-detection/examples/07-browser-paint-lifecycle-benchmark.ts) — Avoiding layout thrashing, DOM batching, and GPU composite profiling.
+
+---
+
+## ⚡ Quick Cheat Sheet: Change Detection & Rendering (Angular 22)
+
+| Concern / Capability | Legacy Angular (< v16) | Modern Angular 22 (v16–v22+) | Architectural Impact |
+| :--- | :--- | :--- | :--- |
+| **Change Detection Engine** | `zone.js` monkey-patches all async APIs | `provideZonelessChangeDetection()` | Removes ~15kB bundle weight; eliminates full-tree dirty sweeps on untargeted async events. |
+| **Component Strategy** | `ChangeDetectionStrategy.Default` (CheckAlways) | `ChangeDetectionStrategy.OnPush` + Signals | Skips unmutated subtrees; checks views only when signal nodes notify scheduler or input references change. |
+| **Reactivity Primitive** | `BehaviorSubject` / `EventEmitter` | `signal()`, `computed()`, `input()`, `output()` | Push-pull dependency graph with glitch-free Diamond Problem resolution; O(1) dirty notification. |
+| **High-Frequency Streams** | `ngZone.runOutsideAngular()` + manual `detectChanges()` | `toSignal(stream$.pipe(throttleTime()))` | Batches continuous events (e.g. 50/sec WebSockets) into a single microtask render frame. |
+| **Observable Cleanup** | `ngOnDestroy` + `takeUntil(destroy$)` | `takeUntilDestroyed()` or `toSignal()` | Automated unsubscription tied to `DestroyRef`; guarantees zero memory leaks or orphaned subscriptions. |
+| **Component Communication** | `@Input()` / `@Output() EventEmitter` | `input()`, `output()`, Shared Signal Service | Type-safe signal inputs/outputs; sibling components communicate seamlessly via root signal stores. |
+| **Are NgModules Required?** | Mandatory (`@NgModule`) | **Strictly Deprecated / Optional** | Standalone is standard; bootstrap via `bootstrapApplication(AppComponent, appConfig)`. |
+| **CSS View Encapsulation** | `ViewEncapsulation.Emulated` | `Emulated` (Default) or `ShadowDom` | Generates `_nghost` & `_ngcontent` attributes; parent CSS **never** leaks into child components (and vice versa). |
+| **Browser Painting Budget** | Top-down dirty check triggers DOM reflows | Microtask batching $\to$ DOM patch $\to$ GPU composite | Minimizes browser layout thrashing; maximizes 60fps/120fps display frame budgets. |
+
+---
+
 ## ⚡ Quick Cheat Sheet: Interceptors & Authentication
 
 | Concern / Capability | Legacy Angular (< v15) | Modern Angular 22 (v16–v22+) | Architectural Impact |
@@ -87,8 +118,8 @@ Functional `HttpInterceptorFn`, request/response onion-pipeline execution order,
 - [x] 📡 **Signals** (`signals/`)
 - [x] 🏗️ **Project Architecture & Flow** (`architecture/`)
 - [x] 🛡️ **HTTP Interceptors & Enterprise Authentication** (`interceptors/`)
-- [ ] ⚡ **Zoneless Angular** (`zoneless/`)
+- [x] ⚡ **Change Detection & Rendering** (`change-detection/`)
+- [x] 🏎️ **Performance & Change Detection** (`change-detection/` - `OnPush`, detaching change detector, batching)
 - [ ] 🔀 **Modern Control Flow** (`control-flow/` - `@if`, `@for`, `@defer`)
 - [ ] 💉 **Dependency Injection** (`dependency-injection/` - `inject()`, hierarchical injectors)
 - [ ] 🌐 **SSR & Hydration** (`ssr-hydration/` - Event replay, incremental hydration)
-- [ ] 🏎️ **Performance & Change Detection** (`performance/` - `OnPush`, detaching change detector)
