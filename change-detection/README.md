@@ -23,17 +23,20 @@ Welcome to the **Angular 22 Change Detection & Rendering Engine Masterclass**, t
 
 ## 1. ⚡ 60-Second Executive Cheat Sheet
 
-| Architectural Concern | Legacy Angular (< v16) | Modern Angular 22 (v16–v22+) | Under the Hood & Performance Impact |
+| Architectural Concern / Strategy | Legacy Angular (< v16) | Modern Angular 22 (v16–v22+) | Under the Hood & Performance Impact |
 | :--- | :--- | :--- | :--- |
-| **Change Detection Engine** | `zone.js` monkey-patches all async APIs | `provideZonelessChangeDetection()` | Removes ~15kB bundle weight; eliminates full-tree dirty sweeps on untargeted async events. |
-| **Component Strategy** | `ChangeDetectionStrategy.Default` (CheckAlways) | `ChangeDetectionStrategy.OnPush` + Signals | Skips unmutated subtrees; checks views only when signal nodes notify scheduler or input references change. |
-| **Reactivity Primitive** | `BehaviorSubject` / `EventEmitter` | `signal()`, `computed()`, `input()`, `output()` | Push-pull dependency graph with glitch-free Diamond Problem resolution; O(1) dirty notification. |
-| **High-Frequency Streams** | `ngZone.runOutsideAngular()` + manual `detectChanges()` | `toSignal(stream$.pipe(throttleTime()))` | Batches continuous events (e.g. 50/sec WebSockets) into a single microtask render frame. |
+| **CD: Default (CheckAlways)** | `ChangeDetectionStrategy.Default` | Used only for legacy interop | `zone.js` monkey-patches all async turns $\to$ invokes `ApplicationRef.tick()` $\to$ sweeps entire component tree from `<app-root>` down to leaves, re-checking every expression $O(N)$. Checks twice in dev mode. |
+| **CD: OnPush (CheckOnce)** | Manual `cdRef.markForCheck()` | `ChangeDetectionStrategy.OnPush` + Signals | Prunes component subtree from dirty checking sweeps. Evaluated **only** when: 1) input references change, 2) component template DOM events fire, 3) `\| async` emits, 4) signal read in template changes, or 5) manual mark. |
+| **CD: Detached (Manual)** | `ChangeDetectorRef.detach()` | `cdRef.detach()` & `cdRef.reattach()` | Completely disconnects component from change detection tree. Angular will **never** check this component automatically. Ideal for 60fps canvas, WebGL, and 1,000 WebSocket packets/sec via `cdRef.detectChanges()`. |
+| **CD: Zoneless Scheduler** | `zone.js` required in polyfills | `provideZonelessChangeDetection()` | Removes ~15kB bundle polyfill. Eliminates full-tree dirty sweeps on untargeted async events (timers, analytics). Native microtask scheduler wakes up only for reactive Signal dirty notifications $O(1)$. |
+| **Encapsulation: Emulated** | `ViewEncapsulation.Emulated` (Default) | `ViewEncapsulation.Emulated` (Default) | Angular rewrites component CSS rules by appending unique attributes `_nghost-ng-c*` and `_ngcontent-ng-c*`. Scopes component CSS to its own template only; parent styles never leak into child elements. |
+| **Encapsulation: ShadowDom** | Deprecated `Native` | `ViewEncapsulation.ShadowDom` | Attaches a native browser Shadow Root (`attachShadow({ mode: 'open' })`). True hardware-grade encapsulation: global page CSS cannot penetrate (only CSS Custom Properties pass through). Component CSS cannot escape. |
+| **Encapsulation: None** | `ViewEncapsulation.None` | `ViewEncapsulation.None` | Zero scoping attributes generated. Angular injects component styles directly into document `<head>` inside a `<style>` block. Styles become 100% global across the entire DOM tree. |
+| **Reactivity Primitive** | `BehaviorSubject` / `EventEmitter` | `signal()`, `computed()`, `input()`, `output()` | Push-pull dependency graph with topological epoch counters; glitch-free Diamond Problem resolution; $O(1)$ targeted dirty notification. |
+| **High-Frequency Streams** | `ngZone.runOutsideAngular()` + manual `detectChanges()` | `toSignal(stream$.pipe(throttleTime(60)))` | Batches continuous events (e.g. 50/sec WebSockets) into human visual perception frames (16ms/60ms) without frame drops or 100% CPU lockup. |
 | **Observable Cleanup** | `ngOnDestroy` + `takeUntil(destroy$)` | `takeUntilDestroyed()` or `toSignal()` | Automated unsubscription tied to `DestroyRef`; guarantees zero memory leaks or orphaned subscriptions. |
-| **Component Communication** | `@Input()` / `@Output() EventEmitter` | `input()`, `output()`, Shared Signal Service | Type-safe signal inputs/outputs; sibling components communicate seamlessly via root signal stores. |
-| **Are NgModules Required?** | Mandatory (`@NgModule`) | **Strictly Deprecated / Optional** | Standalone is standard; bootstrap via `bootstrapApplication(AppComponent, appConfig)`. |
-| **CSS View Encapsulation** | `ViewEncapsulation.Emulated` | `Emulated` (Default) or `ShadowDom` | Generates `_nghost` & `_ngcontent` attributes; parent CSS **never** leaks into child components (and vice versa). |
-| **Rendering to Screen** | Top-down dirty check triggers DOM reflows | Microtask batching $\to$ DOM patch $\to$ GPU composite | Minimizes browser layout thrashing; maximizes 60fps/120fps display frame budgets. |
+| **Component Communication** | `@Input()` / `@Output() EventEmitter` | `input()`, `output()`, Shared Signal Service | Type-safe signal inputs/outputs; sibling components communicate seamlessly via root signal stores without parent prop-drilling. |
+| **Browser Painting Budget** | Top-down dirty check triggers DOM reflows | Microtask batching $\to$ Ivy DOM patch $\to$ GPU composite | Ivy patches only changed DOM nodes. Minimizes browser layout thrashing; maximizes 60fps/120fps display frame budgets. |
 
 ---
 
