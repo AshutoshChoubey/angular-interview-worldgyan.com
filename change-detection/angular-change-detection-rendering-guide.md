@@ -30,8 +30,6 @@ prerequisites:
   - "Solid understanding of Angular components, TypeScript, and modern browser rendering concepts"
 ---
 
-# Angular 22 Change Detection, View Encapsulation & Browser Painting Pipeline Notes
-
 > **Core Philosophy:** In modern Angular 22, Change Detection has evolved from a brute-force, top-down tree sweep driven by `zone.js` monkey-patching into an ultra-fast, fine-grained reactive push-pull graph powered by **Signals** and **Zoneless microtask scheduling** (`provideZonelessChangeDetection()`). Understanding how Angular evaluates bindings, scopes CSS styles via `ViewEncapsulation`, and synchronizes with the browser's layout and paint lifecycle is the defining hallmark of a Senior and Principal Frontend Architect.
 
 ---
@@ -467,6 +465,21 @@ How does Angular scope styles, and what are the exact rules for CSS leakage betw
 ## 10. Step-by-Step Browser Rendering & Painting Pipeline
 
 When an Angular state change occurs, what happens between the TypeScript line of code and the photons emitting from the screen?
+
+<div class="diagram-strip-wrap" aria-label="Angular Change Detection & Browser Painting Sequence">
+  <span class="diagram-strip-title">Runtime Reactivity to GPU Pixel Pipeline</span>
+  <div class="diagram">
+    <div>1. Trigger Event (Signal / WS)</div>
+    <span>➔</span>
+    <div>2. Angular Scheduler (Zoneless O(1))</div>
+    <span>➔</span>
+    <div>3. DOM Patch (Scoped _ngcontent)</div>
+    <span>➔</span>
+    <div>4. Style Match &amp; Layout</div>
+    <span>➔</span>
+    <div>5. GPU Paint &amp; Composite</div>
+  </div>
+</div>
 
 ```
 ┌────────────────────────────────────────────────────────────────────────┐

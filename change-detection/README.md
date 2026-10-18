@@ -158,10 +158,34 @@ Child Component:  <p _ngcontent-c2>Child Text</p> (BLACK, NOT Blue!)
 ## 9. 🎨 Step-by-Step Browser Rendering & Painting Pipeline
 
 ```
-[JS Event / Signal] ➔ [Angular Scheduler] ➔ [DOM Mutation (Renderer2)]
-        │
-        ▼
-[CSSOM Match (_ngcontent)] ➔ [Render Tree] ➔ [Layout / Reflow] ➔ [GPU Paint & Composite]
+┌────────────────────────────────────────────────────────────────────────┐
+│                        1. TRIGGER EVENT (SIGNAL / WS)                  │
+│  User Click / Signal Update / WebSocket ➔ Scheduler Microtask Queue   │
+└───────────────────────────────────┬────────────────────────────────────┘
+                                    │
+                                    ▼
+┌────────────────────────────────────────────────────────────────────────┐
+│                     2. ANGULAR SCHEDULER (ZONELESS O(1))               │
+│  Reactive Graph Traverse ➔ Evaluate Bindings ➔ Ivy Instructions Patch   │
+└───────────────────────────────────┬────────────────────────────────────┘
+                                    │
+                                    ▼
+┌────────────────────────────────────────────────────────────────────────┐
+│                      3. DOM PATCH (SCOPED _ngcontent)                  │
+│  Renderer2 writes new attributes, text nodes, and class mutations      │
+└───────────────────────────────────┬────────────────────────────────────┘
+                                    │
+                                    ▼
+┌────────────────────────────────────────────────────────────────────────┐
+│                      4. STYLE MATCH & GEOMETRY LAYOUT                  │
+│  CSSOM selector match ➔ Render Tree ➔ Geometry coordinates calculation │
+└───────────────────────────────────┬────────────────────────────────────┘
+                                    │
+                                    ▼
+┌────────────────────────────────────────────────────────────────────────┐
+│                      5. GPU PAINT & HARDWARE COMPOSITE                 │
+│  Rasterize vector boxes to pixel bitmaps ➔ Screen display at 60fps/120fps│
+└────────────────────────────────────────────────────────────────────────┘
 ```
 
 ### Avoiding Layout Thrashing:
