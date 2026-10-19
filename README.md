@@ -89,20 +89,19 @@ Modern `inject()` API, Hierarchical Injector Trees (ElementInjector vs Environme
 
 ---
 
-## ⚡ Quick Cheat Sheet: Services & Dependency Injection (Angular 22)
+## ⚡ Quick Cheat Sheet: Services & Dependency Injection (Angular 22 Made Simple)
 
-| Architectural Concern | Legacy Angular (< v14) | Modern Angular 22 (v16–v22+) | Under the Hood & Performance Impact |
+| Question / Concept | Modern Angular 22 | Plain English Explanation | Real-World Analogy |
 | :--- | :--- | :--- | :--- |
-| **Injection Syntax** | `constructor(private s: Svc)` | `private s = inject(Svc);` | Eliminates `emitDecoratorMetadata` runtime reflection. Enables seamless composition inside functions without class inheritance overhead. |
-| **Injection Context** | Constructor parameters only | Field initializers, constructor, or `runInInjectionContext()` | Requires active context where `getInjectable()` is bound. Fails with `NG0203` if invoked asynchronously outside context. |
-| **Injector Hierarchy** | ModuleInjector + ElementInjector | **EnvironmentInjector** + **ElementInjector** | Decoupled from legacy `NgModule`. Tied directly to `bootstrapApplication`, standalone route chunks, and environment initializers. |
-| **Root Singleton Scope** | `providedIn: 'root'` | `providedIn: 'root'` | Application-wide singleton. Fully tree-shakable: bundlers drop unreferenced services completely from production artifacts. |
-| **Platform Scope** | `providedIn: 'platform'` | `providedIn: 'platform'` | Shared across **multiple Angular applications** running in the same browser window (ideal for microfrontend host/remote coordination). |
-| **Component Scope** | `providers: [Svc]` | `providers: [Svc]` | New instance created per component in DOM. Visible to component template AND projected content (`<ng-content>`). |
-| **View Isolation Scope** | `viewProviders: [Svc]` | `viewProviders: [Svc]` | Restricts service instance strictly to component's own template; **hides** token from projected content (`<ng-content>`). |
-| **Resolution Modifiers** | `@Optional() @Self() @SkipSelf() @Host()` | `inject(Svc, { optional: true, self: true, skipSelf: true, host: true })` | Type-safe configuration object passed directly into `inject()`, eliminating parameter decorators and metadata reflection. |
-| **Lifecycle Teardown** | `ngOnDestroy()` in class | `inject(DestroyRef).onDestroy(...)` | Allows standalone functions, factory providers, and services to register cleanup callbacks without implementing component lifecycle interfaces. |
-| **State Reactivity** | `BehaviorSubject<T>` | `signal<T>()` + `computed()` | Fine-grained $O(1)$ reactivity with zero Zone.js overhead; integrates natively with `provideZonelessChangeDetection()`. |
+| **What is a Service?** | `@Injectable({ providedIn: 'root' })` | Centralizes business logic, API calls, and state outside components. | Kitchen Chef: cooks the food so the waiter doesn't have to. |
+| **What is DI?** | Framework delivers instances automatically | Angular manages creation & lifecycle; never write `new MyService()`. | Room service: dial for coffee; someone delivers it ready to drink. |
+| **`inject()` vs Constructor** | `private s = inject(Svc);` | Eliminates constructor parameter bloat, improves type inference. | Old: Filling 5-page paper form. New: 1-click order. |
+| **Root Scope** | `providedIn: 'root'` | App-wide singleton. Bundler drops it if unused (Tree-shakable). | Main building elevator: everyone in the building uses the same one. |
+| **Component Scope** | `@Component({ providers: [Svc] })` | Fresh instance per component; shared with child components. | Private room keycard: each hotel guest gets their own unique copy. |
+| **View Isolation** | `@Component({ viewProviders: [Svc] })` | Fresh instance for component view; **hidden** from `<ng-content>`. | Staff-only kitchen door: guests in dining room cannot touch or see inside. |
+| **Optional Resolution** | `inject(Svc, { optional: true })` | Returns `null` if not found anywhere instead of crashing. | "Do you have ketchup? If not, no worries, I'll eat without it." |
+| **SkipSelf Resolution** | `inject(Svc, { skipSelf: true })` | Skips current component; looks at parent element. | "Ask my manager, don't ask me." (Essential for recursive folder trees). |
+| **Memory Cleanup** | `.pipe(takeUntilDestroyed())` | Auto-cancels subscriptions when component or service is destroyed. | Sleep timer that turns off the TV automatically when you leave. |
 
 ---
 

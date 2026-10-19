@@ -67,3 +67,4 @@ export class TreeNodeComponent {
 
   readonly depth: number = this.parent ? this.parent.depth + 1 : 0;
 }
+

@@ -83,3 +83,4 @@ export class UserProfileDemoComponent {
     }, 1000);
   }
 }
+

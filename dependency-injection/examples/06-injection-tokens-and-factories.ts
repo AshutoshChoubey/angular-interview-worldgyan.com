@@ -83,3 +83,4 @@ export class TabItemComponent {
     return this.container.selectedIndex() === 0;
   }
 }
+

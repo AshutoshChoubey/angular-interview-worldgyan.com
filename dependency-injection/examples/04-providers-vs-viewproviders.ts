@@ -93,3 +93,4 @@ export class ProjectedConsumerComponent {
   // ❌ If uncommented, this throws: Error: NG0201: No provider found for AccordionInternalState!
   // readonly state = inject(AccordionInternalState);
 }
+

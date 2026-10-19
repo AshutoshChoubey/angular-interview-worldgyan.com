@@ -81,3 +81,4 @@ export class ContactFormWidgetComponent {
   readonly draft = inject(FormDraftService);
   readonly session = inject(GlobalSessionService);
 }
+

@@ -1,224 +1,432 @@
-# Angular 22 Services & Dependency Injection Architecture
+# Angular 22 Services & Dependency Injection Made Simple
 
-Welcome to the **Angular 22 Services & Dependency Injection Masterclass**, tailored for frontend engineers preparing for Senior, Lead, and Principal Angular engineering interviews.
-
-> **Core Philosophy:** Dependency Injection (DI) is the architectural spine of Angular. In Angular 22, the framework has completed its paradigm shift from legacy constructor-based parameter reflection to the lightweight, composable, functional **`inject()` API**. Angular resolves dependencies through **two distinct parallel trees**: the **ElementInjector Tree** (tied to DOM component hierarchy and view encapsulation) and the **EnvironmentInjector Tree** (tied to application bootstrapping, platform contexts, and routed chunks). Mastering how these trees interact enables zero-boilerplate service composition, safe multi-provider tokens, and bulletproof memory lifecycle management.
+> **💡 The Big Picture in 10 Seconds:**  
+> A **Component** is like a **Waiter**: it only cares about what the customer sees on the screen (the HTML template).  
+> A **Service** is like the **Kitchen Chef**: it handles the heavy business logic, fetches data from the API, and manages data behind the scenes.  
+> **Dependency Injection (DI)** is the **Delivery System**: instead of the waiter cooking the food himself, Angular's DI system automatically delivers the ready-to-use Chef (Service) directly into the component whenever needed!
 
 ---
 
 ## 📑 Table of Contents
-1. [⚡ 60-Second Executive Cheat Sheet](#1--60-second-executive-cheat-sheet)
-2. [💉 Modern `inject()` API vs Constructor Injection](#2--modern-inject-api-vs-constructor-injection)
-3. [🌲 The Two Parallel Injector Trees (ElementInjector vs EnvironmentInjector)](#3--the-two-parallel-injector-trees)
-4. [📦 8 Types of Services & Provider Scopes](#4--8-types-of-services--provider-scopes)
-5. [🛡️ `providers` vs `viewProviders`: Content Projection Isolation](#5--providers-vs-viewproviders-content-projection-isolation)
-6. [🔍 Resolution Modifiers (`optional`, `self`, `skipSelf`, `host`)](#6--resolution-modifiers)
-7. [🛠️ Provider Recipes: `useClass`, `useExisting`, `useValue`, `useFactory`, `multi`](#7--provider-recipes)
-8. [⏱️ Lifecycle, Teardown & Preventing Memory Leaks with `DestroyRef`](#8--lifecycle-teardown--destroyref)
-9. [🎯 16 Senior & Principal Interview Q&As](#9--16-senior--principal-interview-qas)
-10. [💻 Practical TypeScript Examples](#10--practical-typescript-examples)
+1. [⚡ 60-Second Plain English Cheat Sheet](#1--60-second-plain-english-cheat-sheet)
+2. [🍳 What is a Service & Why Do We Need It?](#2--what-is-a-service--why-do-we-need-it)
+3. [🚚 What is Dependency Injection (DI)?](#3--what-is-dependency-injection-di)
+4. [💉 Modern `inject()` vs Constructor: Why `inject()` Won](#4--modern-inject-vs-constructor-why-inject-won)
+5. [⏱️ The 1 Golden Rule: The Injection Context](#5--the-1-golden-rule-the-injection-context)
+6. [🌲 How Angular Finds Services: The 2 Trees Made Easy](#6--how-angular-finds-services-the-2-trees-made-easy)
+7. [📦 The 3 Main Service Scopes Explained](#7--the-3-main-service-scopes-explained)
+8. [🔍 Resolution Modifiers in Everyday Words](#8--resolution-modifiers-in-everyday-words)
+9. [🛠️ Provider Recipes: `useClass`, `useExisting`, `useValue`, `useFactory`](#9--provider-recipes-useclass-useexisting-usevalue-usefactory)
+10. [🧹 Memory Leaks & Lifecycle Cleanup: `takeUntilDestroyed()`](#10--memory-leaks--lifecycle-cleanup-takeuntildestroyed)
+11. [🎯 16 Real-World Interview Q&As (Plain English)](#11--16-real-world-interview-qas-plain-english)
+12. [💻 Practical TypeScript Examples](#12--practical-typescript-examples)
 
 ---
 
-## 1. ⚡ 60-Second Executive Cheat Sheet
+## 1. ⚡ 60-Second Plain English Cheat Sheet
 
-| Architectural Concern | Legacy Angular (< v14) | Modern Angular 22 (v16–v22+) | Under the Hood & Performance Impact |
-| :--- | :--- | :--- | :--- |
-| **Injection Syntax** | `constructor(private s: Svc)` | `private s = inject(Svc);` | Eliminates `emitDecoratorMetadata` runtime reflection. Enables seamless composition inside functions without class inheritance overhead. |
-| **Injection Context** | Constructor parameters only | Field initializers, constructor, or `runInInjectionContext()` | Requires active context where `getInjectable()` is bound. Fails with `NG0203` if invoked asynchronously outside context. |
-| **Injector Hierarchy** | ModuleInjector + ElementInjector | **EnvironmentInjector** + **ElementInjector** | Decoupled from legacy `NgModule`. Tied directly to `bootstrapApplication`, standalone route chunks, and environment initializers. |
-| **Root Singleton Scope** | `providedIn: 'root'` | `providedIn: 'root'` | Application-wide singleton. Fully tree-shakable: bundlers drop unreferenced services completely from production artifacts. |
-| **Platform Scope** | `providedIn: 'platform'` | `providedIn: 'platform'` | Shared across **multiple Angular applications** running in the same browser window (ideal for microfrontend host/remote coordination). |
-| **Component Scope** | `providers: [Svc]` | `providers: [Svc]` | New instance created per component in DOM. Visible to component template AND projected content (`<ng-content>`). |
-| **View Isolation Scope** | `viewProviders: [Svc]` | `viewProviders: [Svc]` | Restricts service instance strictly to component's own template; **hides** token from projected content (`<ng-content>`). |
-| **Resolution Modifiers** | `@Optional() @Self() @SkipSelf() @Host()` | `inject(Svc, { optional: true, self: true, skipSelf: true, host: true })` | Type-safe configuration object passed directly into `inject()`, eliminating parameter decorators and metadata reflection. |
-| **Lifecycle Teardown** | `ngOnDestroy()` in class | `inject(DestroyRef).onDestroy(...)` | Allows standalone functions, factory providers, and services to register cleanup callbacks without implementing component lifecycle interfaces. |
-| **State Reactivity** | `BehaviorSubject<T>` | `signal<T>()` + `computed()` | Fine-grained $O(1)$ reactivity with zero Zone.js overhead; integrates natively with `provideZonelessChangeDetection()`. |
+| Question / Concept | Simple Answer | Everyday Analogy |
+| :--- | :--- | :--- |
+| **What is a Service?** | A TypeScript class that holds business logic, API calls, and shared state outside components. | A kitchen chef who cooks the food so the waiter doesn't have to. |
+| **What is Dependency Injection?** | Angular automatically creates and supplies service instances so you never call `new MyService()`. | Room service: you dial for coffee; someone brings it to your door ready to drink. |
+| **`inject()` vs Constructor?** | Old: Clunky constructor parameters `constructor(private s: Svc)`.<br>New: Clean single line `private s = inject(Svc);`. | Old: Filling out a 5-page paper form.<br>New: 1-click checkout. |
+| **`providedIn: 'root'`?** | ONE single instance shared across the entire application (Singleton). Tree-shakable. | The main building elevator: everyone in the building uses the exact same one. |
+| **Component `providers: []`?** | A BRAND NEW instance created for this component and its children. Destroyed when component dies. | A private hotel room keycard: each guest gets their own unique one. |
+| **Component `viewProviders: []`?** | A fresh instance for this component's own HTML, but **hidden** from projected `<ng-content>`. | Staff-only kitchen door: guests in the dining room can't see or touch what's inside. |
+| **`inject(Svc, { optional: true })`?** | If Angular can't find the service, don't crash with an error; return `null`. | "Do you have ketchup? If not, no problem, I'll eat without it." |
+| **`inject(Svc, { skipSelf: true })`?** | Don't look at my own component; look at my **parent** component! | "Ask my manager, don't ask me." (Essential for nested recursive components like folder trees). |
+| **`inject(Svc, { self: true })`?** | Check ONLY this component or directive. If not here, stop immediately. | "Check my pocket only. Don't look anywhere else." |
+| **`takeUntilDestroyed()`?** | Automatically unsubscribes RxJS subscriptions when the component or service dies. | An automatic sleep timer that turns off the TV when you leave the room. |
 
 ---
 
-## 2. 💉 Modern `inject()` API vs Constructor Injection
+## 2. 🍳 What is a Service & Why Do We Need It?
 
-Historically, Angular relied on TypeScript's `emitDecoratorMetadata` to inspect constructor parameter types at runtime. Modern Angular applications standardize on the standalone `inject()` function:
+### The Problem Without Services:
+Imagine putting your HTTP calls, cart calculation, and user login logic directly inside your component:
+- ❌ Your component file explodes into 1,000 lines of messy code.
+- ❌ If 5 different pages need user profile data, you have to copy-paste the exact same code 5 times.
+- ❌ It is almost impossible to write unit tests for your UI without making real API calls.
+
+### The Solution:
+Move all the data-handling logic into a **Service**:
 
 ```typescript
-// ❌ Legacy Constructor Injection (Verbose, tightly coupled to class constructors)
-@Component({ ... })
+// src/app/core/user.service.ts
+import { Injectable, signal } from '@angular/core';
+
+@Injectable({ providedIn: 'root' })
+export class UserService {
+  // A signal holding the logged-in user
+  readonly currentUser = signal({ name: 'Ashutosh', role: 'Architect' });
+
+  updateName(newName: string) {
+    this.currentUser.update(u => ({ ...u, name: newName }));
+  }
+}
+```
+
+Now, any component in your application can easily access this data!
+
+---
+
+## 3. 🚚 What is Dependency Injection (DI)?
+
+### The Old Manual Way (Without DI):
+```typescript
+// ❌ BAD: Component creates its own dependency
 export class UserProfileComponent {
+  private userService = new UserService(); // Tight coupling! Hard to test or share!
+}
+```
+**Why this is bad:** If `UserService` later needs `HttpClient`, you would have to go into every single component and update `new UserService(http)`. A maintenance nightmare!
+
+### The Angular DI Way (Automated Delivery):
+You simply **ask** Angular for the service, and Angular creates it, manages it, and delivers it to you:
+
+```typescript
+// ✅ MODERN ANGULAR 22: Clean and simple!
+import { Component, inject } from '@angular/core';
+import { UserService } from './user.service';
+
+@Component({
+  selector: 'app-user-profile',
+  standalone: true,
+  template: `<h2>Hello, {{ user.currentUser().name }}</h2>`
+})
+export class UserProfileComponent {
+  // Angular automatically finds and gives you the UserService instance!
+  protected user = inject(UserService);
+}
+```
+
+---
+
+## 4. 💉 Modern `inject()` vs Constructor: Why `inject()` Won
+
+In older Angular code (before v14), everyone had to use constructor parameters:
+
+```typescript
+// 👴 Old Legacy Way (Constructor Injection)
+@Component({ ... })
+export class OldComponent {
   constructor(
     private userService: UserService,
     @Optional() private analytics: AnalyticsService,
-    @Inject(APP_CONFIG) private config: AppConfig
+    @Inject(API_URL) private apiUrl: string
   ) {}
 }
+```
 
-// ✅ Modern Angular 22 Functional Injection (Clean, composable, type-safe)
+In modern Angular 22, you use **`inject()`**:
+
+```typescript
+// 🚀 Modern Angular 22 Way (inject function)
 @Component({ ... })
-export class UserProfileComponent {
+export class ModernComponent {
   private userService = inject(UserService);
   private analytics = inject(AnalyticsService, { optional: true });
-  private config = inject(APP_CONFIG);
+  private apiUrl = inject(API_URL);
 }
 ```
 
-### The Injection Context & `runInInjectionContext`:
-The `inject()` function relies on an active **Injection Context**. Calling `inject()` inside an asynchronous callback (`setTimeout`, `Promise`, RxJS subscription) or lifecycle hook (`ngOnInit`) throws `NG0203`.
-To safely bridge asynchronous boundaries:
-```typescript
-const injector = inject(Injector);
-
-setTimeout(() => {
-  runInInjectionContext(injector, () => {
-    const http = inject(HttpClient);
-    http.get('/api/data').subscribe();
-  });
-}, 1000);
-```
+### Why Developers Love `inject()`:
+1. **Less typing, no clutter:** No ugly constructor with 10 parameters.
+2. **Type Inference:** TypeScript knows the type automatically without extra `@Inject()` decorators.
+3. **No `super()` headaches in inheritance:** If a child class extends a parent class, you don't have to pass 8 arguments to `super(...)`!
+4. **Reusable Functions:** You can write small, standalone helper functions (like custom hooks) that use `inject()` directly!
 
 ---
 
-## 3. 🌲 The Two Parallel Injector Trees
+## 5. ⏱️ The 1 Golden Rule: The Injection Context
 
-Angular does not use a single flat container for dependencies. Instead, it maintains **two distinct injector hierarchies**:
-
-```
-[NullInjector] ➔ Top sentinel of all DI. Throws NG0201 unless { optional: true }.
-      ▲
-[PlatformInjector] ➔ Shared across multiple Angular apps in same DOM (providedIn: 'platform').
-      ▲
-[RootEnvironmentInjector] ➔ App singletons (providedIn: 'root' / appConfig.providers).
-      ▲
-[Route EnvironmentInjector] ➔ Lazy route chunk providers: [...]. Destroyed on route unload.
-      ▲
-====================== [Fall-through Boundary] ======================
-      ▲
-[Host ElementInjector] ➔ Root Component (<app-root>) providers: [].
-      ▲
-[Parent ElementInjector] ➔ Parent Component (<user-shell>) providers: [].
-      ▲
-[Child ElementInjector] ➔ Leaf Component (<user-avatar>) providers / viewProviders.
-```
-
-### Resolution Traversal Rule:
-1. Angular starts searching at the **ElementInjector** of the requesting component.
-2. It ascends up ancestor **ElementInjectors** (following DOM component nesting).
-3. If not found in the ElementInjector tree, it **falls through** to the **EnvironmentInjector** where the component was instantiated.
-
----
-
-## 4. 📦 8 Types of Services & Provider Scopes
-
-1. **Root Singleton Service (`providedIn: 'root'`)**: Application-wide singleton, created lazily, tree-shakable.
-2. **Platform Singleton Service (`providedIn: 'platform'`)**: Shared across multiple Angular applications in the same window (microfrontends).
-3. **Transient Scoped Service (`providedIn: 'any'`)**: Eager code shares one instance; each lazy-loaded route chunk receives its own independent instance.
-4. **Component Scoped Service (`providers: [Service]`)**: Instantiated per component instance in the DOM; visible to template AND projected content.
-5. **View-Isolated Service (`viewProviders: [Service]`)**: Instantiated per component, but hidden from projected `<ng-content>`.
-6. **Functional Composable Services**: Pure functions using `inject()` under the hood (`useWindowDimensions()`).
-7. **InjectionToken & Factory Services**: Self-providing tree-shakable tokens (`new InjectionToken<T>('...', { factory: () => ... })`).
-8. **Signal-Based State Stores**: State stores using private `signal()` and public `computed()`.
-
----
-
-## 5. 🛡️ `providers` vs `viewProviders`: Content Projection Isolation
+There is only **one rule** with `inject()`:  
+> **You must call `inject()` while the class is being built** (in field initializers or inside the constructor).
 
 ```typescript
-@Component({
-  selector: 'app-accordion-item',
-  standalone: true,
-  viewProviders: [AccordionInternalState],
-  template: `
-    <header (click)="state.toggle()">{{ title }}</header>
-    <div class="content">
-      <ng-content></ng-content> <!-- CANNOT see AccordionInternalState! -->
-    </div>
-  `
-})
-export class AccordionItemComponent {
-  protected state = inject(AccordionInternalState);
-}
-```
-- **Architectural Why:** Prevents projected consumer markup from accidentally hijacking or polluting internal component coordination tokens.
+export class MyComponent {
+  // ✅ ALLOWED: Field initializer
+  private http = inject(HttpClient);
 
----
-
-## 6. 🔍 Resolution Modifiers
-
-| Modifier Option | Traversal Behavior | Common Architectural Use Case |
-| :--- | :--- | :--- |
-| `{ optional: true }` | If token is not found up to `NullInjector`, returns `null` instead of throwing `NG0201`. | Optional feature plugins, telemetry loggers, or fallback services. |
-| `{ self: true }` | Searches **only** the ElementInjector of the immediate component/directive. Does not ascend to parents. | Enforcing that a directive must be placed on an element that provides its own controller. |
-| `{ skipSelf: true }` | Skips current ElementInjector; starts searching immediately at the **parent** ElementInjector. | Hierarchical parent-child linking (nested tree nodes, accordion groups, recursive menu items). |
-| `{ host: true }` | Traverses upward through ElementInjectors but **stops** at the host component boundary. | Directives needing access to their host component without penetrating outer parent component scopes. |
-
----
-
-## 7. 🛠️ Provider Recipes: `useClass`, `useExisting`, `useValue`, `useFactory`, `multi`
-
-- **`useClass`**: Substitutes an alternative class implementation (creates a new instance).
-- **`useExisting`**: Aliases an existing token to an already-created instance (guarantees a single shared instance; prevents duplicate memory allocation).
-- **`useValue`**: Injects static constants or mock objects.
-- **`useFactory`**: Computes dependency dynamically with explicit dependencies.
-- **`multi: true`**: Creates pluggable token arrays (e.g., interceptor lists, validator pipelines).
-
----
-
-## 8. ⏱️ Lifecycle, Teardown & Preventing Memory Leaks with `DestroyRef`
-
-```typescript
-@Injectable() // Component-scoped
-export class LiveMetricsService {
   constructor() {
-    // Automatically cancels interval subscription when host component unmounts
-    interval(1000)
-      .pipe(takeUntilDestroyed())
-      .subscribe(tick => console.log('Tick:', tick));
+    // ✅ ALLOWED: Inside constructor
+    const auth = inject(AuthService);
+  }
 
-    inject(DestroyRef).onDestroy(() => {
-      console.log('Cleaned up resources!');
-    });
+  ngOnInit() {
+    // ❌ ERROR NG0203: Too late! Component is already built!
+    // const router = inject(Router);
+  }
+
+  onClick() {
+    // ❌ ERROR NG0203: Too late! Click happened long after creation!
+    // const dialog = inject(DialogService);
+  }
+}
+```
+
+### What if I really need to inject something later inside a timeout or click?
+Grab the **`Injector`** upfront during initialization, and use **`runInInjectionContext`**:
+
+```typescript
+export class MyComponent {
+  private injector = inject(Injector); // 1. Save injector when building
+
+  onDelayedAction() {
+    setTimeout(() => {
+      // 2. Safely run code inside the injection context later!
+      runInInjectionContext(this.injector, () => {
+        const http = inject(HttpClient);
+        http.get('/api/log').subscribe();
+      });
+    }, 1000);
   }
 }
 ```
 
 ---
 
-## 9. 🎯 16 Senior & Principal Interview Q&As
+## 6. 🌲 How Angular Finds Services: The 2 Trees Made Easy
 
-### Q1: What is the primary difference between constructor injection and the inject() API?
-**Answer:** Constructor injection relies on TypeScript compiler reflection metadata (`emitDecoratorMetadata`) and restricts injection to class instantiation. The `inject()` API is a functional primitive that executes during an active **Injection Context**. It eliminates decorator metadata, enables clean TypeScript generic type inference without `@Inject()`, simplifies inheritance by removing `super(serviceA, serviceB, ...)` boilerplate, and allows dependency injection inside standalone composable functions.
+Imagine you are at your office desk and you need a stapler. How do you find one?
+1. First, you check your own desk (**Your Component**).
+2. If you don't have one, you ask your desk neighbor or team lead (**Parent Component**).
+3. If they don't have one, you walk up to the company stationery cabinet (**App Root**).
+4. If the company cabinet is empty, you get an error: *"No stapler found!"* (unless you said: *"If not available, no worries"*).
 
-### Q2: What causes error NG0203 and how do you resolve it?
-**Answer:** `NG0203: inject() must be called from an injection context` occurs when `inject()` is executed outside of class field initializers, constructors, factory functions, or functional guards—most commonly inside an asynchronous callback (`setTimeout`, `Promise`, RxJS stream) or lifecycle hook (`ngOnInit`). To resolve it, either call `inject()` synchronously during field declaration, or inject the `Injector` instance in the constructor and wrap the asynchronous call inside `runInInjectionContext(this.injector, () => { ... })`.
+Angular does the **exact same thing** using two trees:
 
-### Q3: Explain the two parallel injector trees in Angular. How does resolution traverse them?
-**Answer:** Angular maintains an **ElementInjector Tree** (tied to DOM component hierarchy and view encapsulation) and an **EnvironmentInjector Tree** (tied to application bootstrapping, platform instances, and lazy-loaded routes). When resolving a token, Angular starts at the requesting component's ElementInjector and walks up ancestor element injectors. If the token is not found at `<app-root>`, it **falls through** to the EnvironmentInjector where the component was instantiated.
+```
+[NullInjector] ➔ Throws "No provider found" (unless optional: true)
+      ▲
+[PlatformInjector] ➔ Shared across multiple Angular apps on same page
+      ▲
+[Root EnvironmentInjector] ➔ providedIn: 'root' (App-wide singletons)
+      ▲
+====================== [Fall-through Boundary] ======================
+      ▲
+[Parent Component ElementInjector] ➔ Parent providers: [MyService]
+      ▲
+[Your Component ElementInjector] ➔ Your providers: [MyService]
+```
 
-### Q4: What is the difference between providers and viewProviders in @Component?
-**Answer:** `providers` registers tokens in the component's ElementInjector and makes them accessible to both the component's own template **and any projected content** passed via `<ng-content>`. In contrast, `viewProviders` restricts token visibility **strictly to the component's internal view template**. Projected content elements cannot see `viewProviders`. This is essential for design system components (e.g., accordions) where internal tokens must not collide with projected user markup.
+### The 2 Trees:
+1. **ElementInjector Tree:** Follows your HTML template layout (Child component $\to$ Parent component $\to$ Root `<app-root>`).
+2. **EnvironmentInjector Tree:** Follows the application boot structure (Route $\to$ App Root $\to$ Platform $\to$ Null).
 
-### Q5: What is the difference between providedIn: 'root', 'platform', and 'any'?
-**Answer:** `providedIn: 'root'` creates a single application-wide singleton inside `RootEnvironmentInjector` (tree-shakable if unreferenced). `providedIn: 'platform'` creates a singleton inside `PlatformInjector`, shared across **multiple Angular applications** on the same webpage (microfrontends). `providedIn: 'any'` creates a singleton for eager code, but creates a **new, independent instance** for every lazy-loaded route chunk that requests it.
-
-### Q6: What is the difference between useClass and useExisting?
-**Answer:** `useClass: TargetClass` instructs the injector to instantiate a **brand new instance** of `TargetClass`. `useExisting: TargetToken` instructs the injector to resolve the token to the **already-created instance** of `TargetToken`. Using `useClass` to alias a service creates duplicate instances in memory with desynchronized state; `useExisting` guarantees a single shared instance.
-
-### Q7: How does { skipSelf: true } work and when is it necessary?
-**Answer:** `{ skipSelf: true }` instructs the injector to bypass the current component's ElementInjector and begin the search immediately at the parent ElementInjector. It is essential when building recursive or hierarchical tree components (like `<app-tree-node>`) where a component needs a reference to its **parent** component instance of the same type without injecting itself.
-
-### Q8: How does DestroyRef prevent memory leaks in modern Angular services?
-**Answer:** `DestroyRef` allows any service, factory, or standalone function executing within an injection context to register teardown callbacks via `inject(DestroyRef).onDestroy(() => { ... })`. This powers modern RxJS interop operators like `takeUntilDestroyed()` and enables automatic cleanup of WebSocket connections, timers, and browser event listeners when component-scoped services unmount.
+Angular always checks the **Element Tree** first. If not found, it falls back to the **Environment Tree**!
 
 ---
 
-## 10. 💻 Practical TypeScript Examples
+## 7. 📦 The 3 Main Service Scopes Explained
 
-Explore the complete runnable, annotated code examples in [`examples/`](examples/):
+### 1. `providedIn: 'root'` (Global Singleton)
+```typescript
+@Injectable({ providedIn: 'root' })
+export class AuthService { ... }
+```
+- **What it means:** There is only **ONE** instance for the entire app.
+- **When to use:** For 90% of services! User login, shopping cart, theme state, API services.
+- **Superpower:** **Tree-shakable!** If you create this service but never import or use it, Angular completely removes it from the final production bundle.
 
-1. [`examples/01-inject-function-vs-constructor.ts`](examples/01-inject-function-vs-constructor.ts) — Modern `inject()` API, field initializers, type inference, and `runInInjectionContext()`.
-2. [`examples/02-injector-hierarchy-resolution.ts`](examples/02-injector-hierarchy-resolution.ts) — ElementInjector vs EnvironmentInjector traversal, NullInjector fallback.
-3. [`examples/03-service-scopes-and-providers.ts`](examples/03-service-scopes-and-providers.ts) — `providedIn: 'root'`, `'platform'`, `'any'`, and component-level providers.
-4. [`examples/04-providers-vs-viewproviders.ts`](examples/04-providers-vs-viewproviders.ts) — Content projection isolation and UI library widget token shielding.
-5. [`examples/05-resolution-modifiers-self-host.ts`](examples/05-resolution-modifiers-self-host.ts) — `optional`, `self`, `skipSelf`, `host`, and recursive tree node linking.
-6. [`examples/06-injection-tokens-and-factories.ts`](examples/06-injection-tokens-and-factories.ts) — Tree-shakable `InjectionToken` with factories, `useExisting`, and `multi: true`.
-7. [`examples/07-signal-store-service-pattern.ts`](examples/07-signal-store-service-pattern.ts) — Reactive signal store service, $O(1)$ reactivity, Zoneless ready.
-8. [`examples/08-functional-services-and-destroyref.ts`](examples/08-functional-services-and-destroyref.ts) — Composable functional services with automatic `DestroyRef` teardown.
+---
+
+### 2. Component `providers: [MyService]` (Private Copy for this Component)
+```typescript
+@Component({
+  selector: 'app-ticket-editor',
+  standalone: true,
+  providers: [ TicketDraftService ], // 👈 Creates a fresh instance!
+  template: `...`
+})
+export class TicketEditorComponent { ... }
+```
+- **What it means:** Every time `<app-ticket-editor>` appears on the screen, Angular creates a **brand-new instance** of `TicketDraftService`.
+- **When to use:** When you have local component state that should disappear when the component is closed (e.g. an unsaved form draft, a video player controller).
+- **Bonus:** Any child components inside `<app-ticket-editor>` share this same draft!
+
+---
+
+### 3. Component `viewProviders: [MyService]` (Staff-Only Secret)
+```typescript
+@Component({
+  selector: 'app-custom-card',
+  standalone: true,
+  viewProviders: [ CardPrivateStateService ], // 👈 Hidden from <ng-content>!
+  template: `
+    <div class="card-inner">
+      <ng-content></ng-content> <!-- The user puts content here -->
+    </div>
+  `
+})
+export class CustomCardComponent { ... }
+```
+- **What it means:** A fresh instance for this component, BUT **hidden from content projected through `<ng-content>`**.
+- **Analogy:**  
+  - `providers`: A water cooler in the lobby—both staff and guests can drink from it.  
+  - `viewProviders`: The staff-only breakroom—guests in the lobby cannot see or touch it!
+- **When to use:** When building reusable UI component libraries (accordions, tabs, dropdowns) where you don't want the user's projected HTML to accidentally touch or break your internal state.
+
+---
+
+## 8. 🔍 Resolution Modifiers in Everyday Words
+
+Sometimes you don't want Angular to use the default search path. You can pass simple options to `inject()`:
+
+### 1. `{ optional: true }` — "Don't crash if missing"
+```typescript
+// If LoggerService is not provided anywhere, logger will just be null instead of crashing!
+const logger = inject(LoggerService, { optional: true });
+logger?.log('Hello');
+```
+
+---
+
+### 2. `{ self: true }` — "Look ONLY on my own element"
+```typescript
+// Only check if THIS exact component/directive provides it. Don't look at parents!
+const ctrl = inject(NgControl, { self: true });
+```
+
+---
+
+### 3. `{ skipSelf: true }` — "Ask my parent, NOT me"
+Imagine a folder tree where a folder wants to know its parent folder. If it looks at itself, it gets confused. It must skip itself and ask the parent!
+
+```typescript
+@Component({
+  selector: 'app-folder-node',
+  standalone: true,
+  template: `<div>Folder depth: {{ depth }}</div><ng-content></ng-content>`
+})
+export class FolderNodeComponent {
+  // Skip myself, look at the parent folder node!
+  private parent = inject(FolderNodeComponent, { optional: true, skipSelf: true });
+
+  readonly depth: number = this.parent ? this.parent.depth + 1 : 0;
+}
+```
+
+---
+
+### 4. `{ host: true }` — "Stop at the host component boundary"
+Directives use this when they want to search up to their host component, but not leak into the outer outside world.
+
+---
+
+## 9. 🛠️ Provider Recipes: `useClass`, `useExisting`, `useValue`, `useFactory`
+
+| Provider Syntax | What It Does | Common Real-World Use Case |
+| :--- | :--- | :--- |
+| `{ provide: Logger, useClass: BetterLogger }` | Replaces `Logger` with a brand-new instance of `BetterLogger`. | Swapping a fake mock logger in unit tests. |
+| `{ provide: OldService, useExisting: NewService }` | Aliases `OldService` to the **exact same singleton** as `NewService`. | Refactoring legacy APIs without breaking older components. |
+| `{ provide: API_URL, useValue: 'https://api.worldgyan.com' }` | Injects a static value, string, or configuration object. | App configurations, feature flags, environment URLs. |
+| `{ provide: API_CLIENT, useFactory: () => buildClient() }` | Runs a dynamic function to compute and return the dependency. | Initializing third-party SDKs requiring runtime conditions. |
+| `{ provide: HTTP_INTERCEPTORS, useClass: Auth, multi: true }` | Allows multiple providers under one token (returns an array). | Interceptor pipelines, app initializer arrays. |
+
+---
+
+## 10. 🧹 Memory Leaks & Lifecycle Cleanup: `takeUntilDestroyed()`
+
+### The Common Mistake:
+If a component-scoped service starts an interval timer or subscribes to an RxJS stream and you don't cancel it, that timer keeps running in the background forever even after the component is deleted from the screen! This is a **memory leak**.
+
+### The Modern Angular 22 Fix: `takeUntilDestroyed()`
+You don't need `ngOnDestroy()` anymore! Just add `.pipe(takeUntilDestroyed())`:
+
+```typescript
+import { Injectable } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { interval } from 'rxjs';
+
+@Injectable()
+export class StockTickerService {
+  constructor() {
+    interval(1000)
+      .pipe(takeUntilDestroyed()) // 👈 Automatically stops when component dies!
+      .subscribe(tick => console.log('Tick:', tick));
+  }
+}
+```
+
+Or register custom teardown with **`DestroyRef`**:
+```typescript
+import { inject, DestroyRef } from '@angular/core';
+
+export function useWindowResize() {
+  const onResize = () => console.log(window.innerWidth);
+  window.addEventListener('resize', onResize);
+
+  // Automatically clean up when whoever called this function gets destroyed!
+  inject(DestroyRef).onDestroy(() => {
+    window.removeEventListener('resize', onResize);
+  });
+}
+```
+
+---
+
+## 11. 🎯 16 Real-World Interview Q&As (Plain English)
+
+### Q1: What is Dependency Injection in simple terms?
+**Answer:** DI is a design pattern where a class receives its dependencies from an external source (Angular) rather than creating them itself via `new MyService()`. This decouples classes, makes testing effortless via mocks, and centralizes instance lifecycle management.
+
+### Q2: What is the benefit of `inject()` over constructor injection?
+**Answer:** `inject()` removes constructor boilerplate, enables clean TypeScript generic type inference without `@Inject()`, makes class inheritance simple (no need to forward dependencies to `super()`), and allows creating reusable functional primitives (like custom hooks).
+
+### Q3: What is the difference between `providers` and `viewProviders`?
+**Answer:** Both create an instance for the component. However, `providers` is visible to both the component's own template **and** projected content inside `<ng-content>`. `viewProviders` is visible **only** to the component's own template, hiding the service from projected content.
+
+### Q4: What does `providedIn: 'root'` do under the hood?
+**Answer:** It registers the service with the `RootEnvironmentInjector` as an application-wide singleton. It is also **tree-shakable**: if no component or code references the service, the bundler excludes it from the production JavaScript bundle.
+
+### Q5: When does error `NG0203` occur?
+**Answer:** It occurs when `inject()` is called outside an active **Injection Context** (for example, inside `ngOnInit()`, inside a `setTimeout()`, or in an event handler). To fix it, call `inject()` during field initialization, or wrap asynchronous code in `runInInjectionContext(this.injector, () => { ... })`.
+
+### Q6: Why does `{ skipSelf: true }` matter in tree structures?
+**Answer:** In nested recursive components (like a folder tree `<app-folder-node>`), each folder wants to find its parent folder. Without `skipSelf: true`, the folder would inject itself and think its depth is 0. `skipSelf: true` skips the current component and looks up at the parent!
+
+### Q7: What is the difference between `useClass` and `useExisting`?
+**Answer:** `useClass` creates a **brand-new instance** of the target class. `useExisting` creates an **alias** pointing to an already-existing instance. If you want two tokens to share the exact same singleton instance, you must use `useExisting`.
+
+### Q8: How does modern Angular handle service teardown?
+**Answer:** Via `DestroyRef`. Calling `inject(DestroyRef).onDestroy(() => cleanup())` or using `.pipe(takeUntilDestroyed())` allows services and functions to register their own cleanup without needing to implement `ngOnDestroy()`.
+
+### Q9: What is `providedIn: 'platform'`?
+**Answer:** It registers the service in the `PlatformInjector`. This single instance is shared across **multiple Angular applications** running in the same browser window (e.g. Microfrontends sharing a global auth or logging bus).
+
+### Q10: How do you inject a service inside a functional route guard?
+**Answer:** Since functional route guards execute inside an injection context, you simply call `const auth = inject(AuthService);` directly in the guard function!
+
+### Q11: What is an `InjectionToken` and when should you use one?
+**Answer:** An `InjectionToken` is an object used to inject non-class dependencies, such as primitives, interface types, API URLs, or configuration objects where no JavaScript class constructor exists.
+
+### Q12: What is the `NullInjector`?
+**Answer:** The `NullInjector` is the top-most sentinel injector in the hierarchy. If a dependency cannot be found anywhere in the tree, the `NullInjector` throws the familiar `NullInjectorError: No provider for X!` unless `{ optional: true }` was specified.
+
+### Q13: Can a service inject another service?
+**Answer:** Yes! As long as the injected service is in the same injector or an ancestor injector, any service can call `inject(OtherService)`. Circular dependencies must be avoided.
+
+### Q14: How does tree-shaking work with Angular services?
+**Answer:** When a service uses `@Injectable({ providedIn: 'root' })`, the service points to the module, not vice versa. If no imported code references the token, JavaScript bundlers (esbuild / Webpack) strip the class entirely from the production bundle.
+
+### Q15: What is the difference between `@Self()` and `@Host()`?
+**Answer:** `@Self()` looks only on the current element. `@Host()` starts on the current element and walks up until it hits the host component that rendered the template, preventing dependencies from leaking into the parent application.
+
+### Q16: How do you unit test a component that uses `inject()`?
+**Answer:** In `TestBed.configureTestingModule()`, override the service provider using `{ provide: MyService, useValue: mockService }`. When the component calls `inject(MyService)`, Angular injects the mock automatically!
+
+---
+
+## 12. 💻 Practical TypeScript Examples
+
+Explore the complete, production-grade example files in this directory:
+
+- [`01-inject-function-vs-constructor.ts`](./examples/01-inject-function-vs-constructor.ts) — Field injection, injection context & async handling.
+- [`02-injector-hierarchy-resolution.ts`](./examples/02-injector-hierarchy-resolution.ts) — ElementInjector vs EnvironmentInjector lookup path.
+- [`03-service-scopes-and-providers.ts`](./examples/03-service-scopes-and-providers.ts) — Root, platform, and component-scoped services.
+- [`04-providers-vs-viewproviders.ts`](./examples/04-providers-vs-viewproviders.ts) — Protecting component internals from `<ng-content>`.
+- [`05-resolution-modifiers-self-host.ts`](./examples/05-resolution-modifiers-self-host.ts) — `optional`, `self`, `skipSelf`, and `host` in action.
+- [`06-injection-tokens-and-factories.ts`](./examples/06-injection-tokens-and-factories.ts) — InjectionTokens, `useFactory`, and multi-providers.
+- [`07-signal-store-service-pattern.ts`](./examples/07-signal-store-service-pattern.ts) — Lightweight reactive Signal Store service.
+- [`08-functional-services-and-destroyref.ts`](./examples/08-functional-services-and-destroyref.ts) — Composable functions & automated memory cleanup.
