@@ -123,6 +123,7 @@
   };
 
   function getSceneKey(sceneName) {
+    if (sceneName.includes("service") || sceneName.includes("dependency-injection") || sceneName.includes("di-hierarchy")) return "services-di";
     if (sceneName.includes("change-detection") || sceneName.includes("rendering") || sceneName.includes("paint") || (sceneName.includes("pipeline") && !sceneName.includes("interceptor"))) return "change-detection";
     if (sceneName.includes("interceptor")) return "interceptor-pipeline";
     if (sceneName.includes("refresh-token")) return "refresh-token-flow";
@@ -2247,6 +2248,157 @@
     ctx.textAlign = "left";
   }
 
+  function drawServicesDiHierarchyScene(ctx, t, skipOuterBg) {
+    drawMacShell(ctx, "DI & Services Hierarchy", t, skipOuterBg);
+
+    // Top Header Banner
+    roundRect(ctx, 68, 114, 944, 82, 14);
+    ctx.fillStyle = "#111c33";
+    ctx.fill();
+    ctx.strokeStyle = "#1e293b";
+    ctx.lineWidth = 1;
+    ctx.stroke();
+
+    ctx.textAlign = "left";
+    ctx.font = "800 13px 'JetBrains Mono', monospace";
+    ctx.fillStyle = "#38bdf8";
+    ctx.fillText("ANGULAR 22 RUNTIME DI ARCHITECTURE · TWO PARALLEL TREES", 92, 142);
+    ctx.font = "800 24px -apple-system, sans-serif";
+    ctx.fillStyle = "#ffffff";
+    ctx.fillText("Hierarchical Dependency Injection & Service Scopes", 92, 172);
+
+    const activeStep = Math.floor((t * 4) % 4);
+
+    // 4 Pipeline Step Cards
+    const steps = [
+      { num: "01", name: "NullInjector", sub: "Top Sentinel", desc: "Throws NG0201 unless optional", status: "● Sentinel Ready", col: "#f43f5e", bg: "rgba(244,63,94,0.14)" },
+      { num: "02", name: "PlatformInjector", sub: "providedIn: 'platform'", desc: "Shared across multiple apps", status: "● Multi-App Scope", col: "#c084fc", bg: "rgba(192,132,252,0.14)" },
+      { num: "03", name: "Root Environment", sub: "providedIn: 'root'", desc: "App-wide tree-shakable singleton", status: "● Singleton Bound", col: "#38bdf8", bg: "rgba(56,189,248,0.14)" },
+      { num: "04", name: "ElementInjector", sub: "providers / viewProviders", desc: "DOM component view scoped", status: "● DOM View Tied", col: "#34d399", bg: "rgba(52,211,153,0.14)" },
+    ];
+
+    steps.forEach((s, i) => {
+      const cx = 68 + i * 242;
+      roundRect(ctx, cx, 206, 226, 172, 12);
+      ctx.fillStyle = i === activeStep ? "#132142" : "#090e1c";
+      ctx.fill();
+      ctx.strokeStyle = i === activeStep ? s.col : "#1e293b";
+      ctx.lineWidth = i === activeStep ? 2 : 1;
+      ctx.stroke();
+
+      roundRect(ctx, cx + 12, 218, 58, 20, 5);
+      ctx.fillStyle = s.bg;
+      ctx.fill();
+      ctx.font = "800 11px 'JetBrains Mono', monospace";
+      ctx.fillStyle = s.col;
+      ctx.fillText("STEP " + s.num, cx + 18, 232);
+
+      ctx.font = "800 17px -apple-system, sans-serif";
+      ctx.fillStyle = "#ffffff";
+      ctx.fillText(s.name, cx + 12, 264);
+
+      ctx.font = "700 12.5px 'JetBrains Mono', monospace";
+      ctx.fillStyle = "#94a3b8";
+      ctx.fillText(s.sub, cx + 12, 288);
+
+      ctx.font = "500 12.5px -apple-system, sans-serif";
+      ctx.fillStyle = "#cbd5e1";
+      ctx.fillText(s.desc, cx + 12, 320, 202);
+
+      // Status Indicator
+      roundRect(ctx, cx + 12, 338, 202, 26, 6);
+      ctx.fillStyle = i === activeStep ? "rgba(0,0,0,0.55)" : "rgba(0,0,0,0.3)";
+      ctx.fill();
+      ctx.font = "700 11.5px 'JetBrains Mono', monospace";
+      ctx.fillStyle = s.col;
+      ctx.fillText(s.status, cx + 22, 355);
+
+      if (i < 3) {
+        ctx.font = "800 18px 'JetBrains Mono', monospace";
+        ctx.fillStyle = i === activeStep ? s.col : "#475569";
+        ctx.fillText("➔", cx + 228, 292);
+      }
+    });
+
+    // Middle Comparison Box: Provider Scopes Matrix
+    roundRect(ctx, 68, 390, 944, 156, 12);
+    ctx.fillStyle = "#0c1527";
+    ctx.fill();
+    ctx.strokeStyle = "#1e293b";
+    ctx.lineWidth = 1;
+    ctx.stroke();
+
+    ctx.font = "800 13px 'JetBrains Mono', monospace";
+    ctx.fillStyle = "#38bdf8";
+    ctx.fillText("SERVICE PROVIDER SCOPES & RESOLUTION MATRIX (ANGULAR 22)", 92, 416);
+
+    const matrixRows = [
+      { name: "providedIn: 'root'", desc: "Tree-shakable singleton; lives for entire session", cost: "RootEnvironmentInjector", col: "#38bdf8" },
+      { name: "providedIn: 'platform'", desc: "Shared across multiple Angular microfrontend apps", cost: "PlatformInjector", col: "#c084fc" },
+      { name: "providers: [Service]", desc: "Component scoped; visible to template & <ng-content>", cost: "ElementInjector (Open)", col: "#fbbf24" },
+      { name: "viewProviders: [Service]", desc: "Restricted to component view; hidden from <ng-content>", cost: "ElementInjector (Isolated)", col: "#34d399" },
+    ];
+
+    matrixRows.forEach((r, idx) => {
+      const ry = 442 + idx * 26;
+      ctx.font = "800 13.5px 'JetBrains Mono', monospace";
+      ctx.fillStyle = r.col;
+      ctx.fillText(r.name, 92, ry);
+
+      ctx.font = "500 12.5px -apple-system, sans-serif";
+      ctx.fillStyle = "#cbd5e1";
+      ctx.fillText(r.desc, 330, ry);
+
+      ctx.textAlign = "right";
+      ctx.font = "800 12.5px 'JetBrains Mono', monospace";
+      ctx.fillStyle = r.col;
+      ctx.fillText(r.cost, 988, ry);
+      ctx.textAlign = "left";
+    });
+
+    // Bottom Code Preview Pane
+    roundRect(ctx, 68, 558, 944, 386, 12);
+    ctx.fillStyle = "#070c17";
+    ctx.fill();
+    ctx.strokeStyle = "#1e293b";
+    ctx.lineWidth = 1;
+    ctx.stroke();
+
+    ctx.font = "800 12.5px 'JetBrains Mono', monospace";
+    ctx.fillStyle = "#94a3b8";
+    ctx.fillText("// Modern inject() with Resolution Modifiers & DestroyRef", 92, 584);
+
+    const codeLines = [
+      { text: "// 1. Modern Standalone Component with Scoped Providers", col: "#64748b" },
+      { text: "@Component({", col: "#c084fc" },
+      { text: "  standalone: true,", col: "#f8fafc" },
+      { text: "  providers: [ CartService ],", col: "#fbbf24" },
+      { text: "  viewProviders: [ InternalWidgetState ] // Hidden from <ng-content>", col: "#34d399" },
+      { text: "})", col: "#c084fc" },
+      { text: "export class ProductCardComponent {", col: "#f8fafc" },
+      { text: "  private cart = inject(CartService);", col: "#38bdf8" },
+      { text: "  private parent = inject(GridComponent, { optional: true, skipSelf: true });", col: "#fbbf24" },
+      { text: "  private hostCtrl = inject(NgControl, { self: true });", col: "#c084fc" },
+      { text: "  private destroyRef = inject(DestroyRef).onDestroy(() => this.cleanup());", col: "#34d399" },
+      { text: "}", col: "#f8fafc" },
+    ];
+
+    codeLines.forEach((ln, lIdx) => {
+      ctx.font = "14px 'JetBrains Mono', monospace";
+      ctx.fillStyle = ln.col;
+      ctx.fillText(ln.text, 92, 616 + lIdx * 23);
+    });
+
+    // Footer
+    ctx.font = "700 13px 'JetBrains Mono', monospace";
+    ctx.fillStyle = "#94a3b8";
+    ctx.fillText("Resolution: Element ➔ Environment ➔ Platform ➔ Null | Modifiers: self, skipSelf, host, optional", 68, 974);
+    ctx.textAlign = "right";
+    ctx.fillStyle = "#38bdf8";
+    ctx.fillText("worldgyan.com · Ashutosh Kumar Choubey", 1012, 974);
+    ctx.textAlign = "left";
+  }
+
   function drawCore1080Scene(ctx, sceneKey, normTime, skipOuterBg) {
     ctx.save();
     if (skipOuterBg) {
@@ -2255,7 +2407,9 @@
       ctx.scale(1.036, 1.036);
       ctx.translate(-540, -540);
     }
-    if (sceneKey === "interceptor-pipeline") {
+    if (sceneKey === "services-di") {
+      drawServicesDiHierarchyScene(ctx, normTime, skipOuterBg);
+    } else if (sceneKey === "interceptor-pipeline") {
       drawInterceptorPipelineScene(ctx, normTime, skipOuterBg);
     } else if (sceneKey === "change-detection") {
       drawChangeDetectionScene(ctx, normTime, skipOuterBg);

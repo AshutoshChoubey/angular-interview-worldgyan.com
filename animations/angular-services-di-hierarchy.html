@@ -1,0 +1,507 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Angular 22 Dependency Injection &amp; Services Hierarchy (1080x1080 macOS Animation)</title>
+  <style>
+    :root {
+      --bg-outer: #060a14;
+      --slate-bg: #0f172a;
+      --slate-deep: #090e1c;
+      --slate-card: #111c33;
+      --slate-border: #1e293b;
+      --slate-muted: #94a3b8;
+      --text-main: #f8fafc;
+      --text-secondary: #cbd5e1;
+      --cyan: #38bdf8;
+      --emerald: #34d399;
+      --purple: #c084fc;
+      --amber: #fbbf24;
+      --rose: #f43f5e;
+      --red-dot: #ff5f56;
+      --yellow-dot: #ffbd2e;
+      --green-dot: #27c93f;
+      --font-sans: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', Roboto, sans-serif;
+      --font-mono: 'JetBrains Mono', 'Fira Code', Consolas, monospace;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html, body {
+      width: 100%;
+      height: 100%;
+      background: var(--bg-outer);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: var(--font-sans);
+      color: var(--text-main);
+      overflow: hidden;
+    }
+
+    .stage-1080 {
+      width: 1080px;
+      height: 1080px;
+      min-width: 1080px;
+      min-height: 1080px;
+      background:
+        radial-gradient(circle at 20% 20%, rgba(56, 189, 248, 0.16) 0%, transparent 45%),
+        radial-gradient(circle at 80% 80%, rgba(192, 132, 252, 0.16) 0%, transparent 45%),
+        var(--slate-bg);
+      padding: 40px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+    }
+
+    .stage-1080::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background-image:
+        linear-gradient(to right, rgba(56, 189, 248, 0.04) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(56, 189, 248, 0.04) 1px, transparent 1px);
+      background-size: 36px 36px;
+      pointer-events: none;
+    }
+
+    .macos-window {
+      width: 1000px;
+      height: 1000px;
+      background: rgba(9, 14, 28, 0.98);
+      border: 1.5px solid rgba(56, 189, 248, 0.35);
+      border-radius: 20px;
+      box-shadow: 0 32px 80px rgba(0, 0, 0, 0.85), 0 0 40px rgba(56, 189, 248, 0.14);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      position: relative;
+      z-index: 2;
+    }
+
+    .window-titlebar {
+      height: 56px;
+      background: #0d1527;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 22px;
+    }
+
+    .window-dots {
+      display: flex;
+      gap: 8px;
+    }
+    .window-dot { width: 12px; height: 12px; border-radius: 50%; }
+    .window-dot.red { background: var(--red-dot); }
+    .window-dot.yellow { background: var(--yellow-dot); }
+    .window-dot.green { background: var(--green-dot); }
+
+    .window-title {
+      font-family: var(--font-mono);
+      font-size: 13.5px;
+      font-weight: 700;
+      color: var(--cyan);
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+    }
+
+    .window-badge {
+      font-size: 13px;
+      font-weight: 700;
+      color: #94a3b8;
+      background: rgba(148, 163, 184, 0.12);
+      padding: 5px 12px;
+      border-radius: 6px;
+      border: 1px solid rgba(148, 163, 184, 0.22);
+    }
+
+    .window-body {
+      flex: 1;
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+    }
+
+    /* Hero Header */
+    .hero-banner {
+      background: linear-gradient(135deg, rgba(17, 28, 51, 0.95), rgba(9, 14, 28, 0.95));
+      border: 1px solid rgba(56, 189, 248, 0.28);
+      border-radius: 14px;
+      padding: 16px 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .hero-kicker {
+      font-family: var(--font-mono);
+      font-size: 13px;
+      font-weight: 800;
+      color: var(--cyan);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      margin-bottom: 4px;
+      display: block;
+    }
+
+    .hero-title {
+      font-size: 24px;
+      font-weight: 800;
+      color: #ffffff;
+      letter-spacing: -0.02em;
+    }
+
+    .hero-pill {
+      font-family: var(--font-mono);
+      font-size: 13px;
+      font-weight: 800;
+      background: rgba(52, 211, 153, 0.16);
+      color: var(--emerald);
+      border: 1px solid rgba(52, 211, 153, 0.35);
+      padding: 6px 14px;
+      border-radius: 999px;
+    }
+
+    /* 4-Step Injector Hierarchy Grid */
+    .pipeline-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
+      position: relative;
+    }
+
+    .step-card {
+      background: #0b1222;
+      border: 1px solid #1e293b;
+      border-radius: 12px;
+      padding: 16px 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      transition: all 0.4s ease;
+      position: relative;
+    }
+
+    .step-card.active {
+      background: #111d38;
+      border-color: var(--cyan);
+      box-shadow: 0 0 24px rgba(56, 189, 248, 0.25);
+    }
+
+    .step-badge {
+      font-family: var(--font-mono);
+      font-size: 12.5px;
+      font-weight: 800;
+      padding: 3px 8px;
+      border-radius: 4px;
+      display: inline-block;
+      width: fit-content;
+    }
+
+    .step-title {
+      font-size: 16.5px;
+      font-weight: 800;
+      color: #ffffff;
+      line-height: 1.25;
+    }
+
+    .step-sub {
+      font-family: var(--font-mono);
+      font-size: 13px;
+      color: #94a3b8;
+    }
+
+    .step-detail {
+      font-size: 13px;
+      color: #cbd5e1;
+      line-height: 1.4;
+    }
+
+    .status-indicator {
+      margin-top: auto;
+      font-family: var(--font-mono);
+      font-size: 12.5px;
+      font-weight: 700;
+      padding: 5px 8px;
+      border-radius: 6px;
+      background: rgba(0, 0, 0, 0.4);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    /* Strategy Matrix */
+    .strategy-matrix {
+      background: #0b1222;
+      border: 1px solid #1e293b;
+      border-radius: 12px;
+      padding: 16px 18px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .matrix-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid #1e293b;
+      padding-bottom: 8px;
+    }
+
+    .matrix-title {
+      font-family: var(--font-mono);
+      font-size: 13.5px;
+      font-weight: 800;
+      color: var(--cyan);
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+    }
+
+    .matrix-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 4px 0;
+    }
+
+    .matrix-col-name {
+      font-family: var(--font-mono);
+      font-size: 14px;
+      font-weight: 800;
+      width: 250px;
+    }
+
+    .matrix-col-desc {
+      font-size: 13px;
+      color: #cbd5e1;
+      flex: 1;
+    }
+
+    .matrix-col-cost {
+      font-family: var(--font-mono);
+      font-size: 13px;
+      font-weight: 800;
+      text-align: right;
+      width: 200px;
+    }
+
+    /* Code Preview Pane */
+    .code-pane {
+      background: #070c17;
+      border: 1px solid #1e293b;
+      border-radius: 12px;
+      padding: 18px 22px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      font-family: var(--font-mono);
+      font-size: 14px;
+      line-height: 1.5;
+    }
+
+    .code-comment { color: #64748b; }
+    .code-keyword { color: var(--purple); font-weight: 700; }
+    .code-ident { color: #f8fafc; }
+    .code-fn { color: var(--cyan); }
+    .code-str { color: var(--emerald); }
+    .code-type { color: var(--amber); }
+
+    /* Footer */
+    .window-footer {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0 4px;
+      font-family: var(--font-mono);
+      font-size: 13px;
+      color: #94a3b8;
+    }
+
+    .footer-brand {
+      color: var(--cyan);
+      font-weight: 700;
+    }
+  </style>
+</head>
+<body>
+  <div class="stage-1080">
+    <div class="macos-window">
+      <!-- Titlebar -->
+      <div class="window-titlebar">
+        <div class="window-dots">
+          <div class="window-dot red"></div>
+          <div class="window-dot yellow"></div>
+          <div class="window-dot green"></div>
+        </div>
+        <div class="window-title">Angular 22 Services &amp; Dependency Injection Pipeline</div>
+        <div class="window-badge">1080×1080 4K READY</div>
+      </div>
+
+      <!-- Window Body -->
+      <div class="window-body">
+        <!-- Hero Header -->
+        <div class="hero-banner">
+          <div>
+            <span class="hero-kicker">ANGULAR 22 RUNTIME DI ARCHITECTURE · TWO PARALLEL TREES</span>
+            <h1 class="hero-title">Hierarchical Dependency Injection &amp; Service Scopes</h1>
+          </div>
+          <div class="hero-pill">INJECT() · ZERO ZONE.JS</div>
+        </div>
+
+        <!-- 4-Step Injector Hierarchy Grid -->
+        <div class="pipeline-grid">
+          <!-- Step 1 -->
+          <div class="step-card" id="card-0">
+            <span class="step-badge" style="background: rgba(244,63,94,0.14); color: var(--rose);">STEP 01</span>
+            <h2 class="step-title">NullInjector</h2>
+            <div class="step-sub">Top Boundary</div>
+            <p class="step-detail">Root sentinel of all DI. Throws NG0201 unless marked optional.</p>
+            <div class="status-indicator" style="color: var(--rose);">
+              <span>●</span> <span id="status-0">Sentinel Ready</span>
+            </div>
+          </div>
+
+          <!-- Step 2 -->
+          <div class="step-card" id="card-1">
+            <span class="step-badge" style="background: rgba(192,132,252,0.14); color: var(--purple);">STEP 02</span>
+            <h2 class="step-title">PlatformInjector</h2>
+            <div class="step-sub">providedIn: 'platform'</div>
+            <p class="step-detail">Shared across all Angular apps in the same DOM window.</p>
+            <div class="status-indicator" style="color: var(--purple);">
+              <span>●</span> <span id="status-1">Multi-App Scope</span>
+            </div>
+          </div>
+
+          <!-- Step 3 -->
+          <div class="step-card" id="card-2">
+            <span class="step-badge" style="background: rgba(56,189,248,0.14); color: var(--cyan);">STEP 03</span>
+            <h2 class="step-title">Root Environment</h2>
+            <div class="step-sub">providedIn: 'root'</div>
+            <p class="step-detail">App-wide tree-shakable singleton. Lazy routes inherit root.</p>
+            <div class="status-indicator" style="color: var(--cyan);">
+              <span>●</span> <span id="status-2">Singleton Bound</span>
+            </div>
+          </div>
+
+          <!-- Step 4 -->
+          <div class="step-card" id="card-3">
+            <span class="step-badge" style="background: rgba(52,211,153,0.14); color: var(--emerald);">STEP 04</span>
+            <h2 class="step-title">ElementInjector</h2>
+            <div class="step-sub">providers / viewProviders</div>
+            <p class="step-detail">DOM component scoped. ViewProviders hides from ng-content.</p>
+            <div class="status-indicator" style="color: var(--emerald);">
+              <span>●</span> <span id="status-3">DOM View Tied</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Strategy Matrix -->
+        <div class="strategy-matrix">
+          <div class="matrix-header">
+            <span class="matrix-title">Angular 22 Service Provider Scopes &amp; Resolution Matrix</span>
+          </div>
+
+          <div class="matrix-row">
+            <span class="matrix-col-name" style="color: var(--cyan);">providedIn: 'root'</span>
+            <span class="matrix-col-desc">Tree-shakable application singleton; lives for entire session</span>
+            <span class="matrix-col-cost" style="color: var(--cyan);">RootEnvironmentInjector</span>
+          </div>
+
+          <div class="matrix-row">
+            <span class="matrix-col-name" style="color: var(--purple);">providedIn: 'platform'</span>
+            <span class="matrix-col-desc">Shared across multiple Angular microfrontend apps in same page</span>
+            <span class="matrix-col-cost" style="color: var(--purple);">PlatformInjector</span>
+          </div>
+
+          <div class="matrix-row">
+            <span class="matrix-col-name" style="color: var(--amber);">providers: [Service]</span>
+            <span class="matrix-col-desc">Component instance scoped; visible to template AND projected content</span>
+            <span class="matrix-col-cost" style="color: var(--amber);">ElementInjector (Open)</span>
+          </div>
+
+          <div class="matrix-row">
+            <span class="matrix-col-name" style="color: var(--emerald);">viewProviders: [Service]</span>
+            <span class="matrix-col-desc">Restricted strictly to component view; hidden from &lt;ng-content&gt;</span>
+            <span class="matrix-col-cost" style="color: var(--emerald);">ElementInjector (Isolated)</span>
+          </div>
+        </div>
+
+        <!-- Code Preview Pane -->
+        <div class="code-pane">
+          <div><span class="code-comment">// Modern inject() with Resolution Modifiers &amp; DestroyRef Teardown</span></div>
+          <div><span class="code-keyword">@Component</span>({</div>
+          <div>&nbsp;&nbsp;<span class="code-ident">standalone</span>: <span class="code-keyword">true</span>,</div>
+          <div>&nbsp;&nbsp;<span class="code-ident">providers</span>: [ <span class="code-type">CartService</span> ],</div>
+          <div>&nbsp;&nbsp;<span class="code-ident">viewProviders</span>: [ <span class="code-type">InternalWidgetState</span> ] <span class="code-comment">// Hidden from &lt;ng-content&gt;</span></div>
+          <div>})</div>
+          <div><span class="code-keyword">export class</span> <span class="code-type">ProductCardComponent</span> {</div>
+          <div>&nbsp;&nbsp;<span class="code-keyword">private</span> <span class="code-ident">cart</span> = <span class="code-fn">inject</span>(<span class="code-type">CartService</span>);</div>
+          <div>&nbsp;&nbsp;<span class="code-keyword">private</span> <span class="code-ident">parent</span> = <span class="code-fn">inject</span>(<span class="code-type">GridComponent</span>, { <span class="code-ident">optional</span>: <span class="code-keyword">true</span>, <span class="code-ident">skipSelf</span>: <span class="code-keyword">true</span> });</div>
+          <div>&nbsp;&nbsp;<span class="code-keyword">private</span> <span class="code-ident">destroyRef</span> = <span class="code-fn">inject</span>(<span class="code-type">DestroyRef</span>).<span class="code-fn">onDestroy</span>(() =&gt; <span class="code-ident">cleanup</span>());</div>
+          <div>}</div>
+        </div>
+
+        <!-- Footer -->
+        <div class="window-footer">
+          <div>Resolution: Element ➔ Environment ➔ Platform ➔ Null | Modifiers: self, skipSelf, host, optional</div>
+          <div class="footer-brand">worldgyan.com · Ashutosh Kumar Choubey</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Live Pulse & Phase Animation
+    let phase = 0;
+    const cards = [
+      document.getElementById('card-0'),
+      document.getElementById('card-1'),
+      document.getElementById('card-2'),
+      document.getElementById('card-3')
+    ];
+    const statuses = [
+      document.getElementById('status-0'),
+      document.getElementById('status-1'),
+      document.getElementById('status-2'),
+      document.getElementById('status-3')
+    ];
+    const statusLabels = [
+      ["Sentinel Ready", "Checking Fallback", "Null Handled", "Resolved Optional"],
+      ["Multi-App Scope", "Active Platform", "Shared MicroFE", "Session Verified"],
+      ["Singleton Bound", "Resolving Token", "Cache Hit", "Tree-Shaken OK"],
+      ["DOM View Tied", "Inspecting Host", "ViewProvider Protected", "DestroyRef Bound"]
+    ];
+
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.has('phase')) {
+      phase = parseInt(urlParams.get('phase'), 10) % 4;
+      cards.forEach((c, idx) => {
+        if (idx === phase) {
+          c.classList.add('active');
+          statuses[idx].textContent = statusLabels[idx][0];
+        } else {
+          c.classList.remove('active');
+        }
+      });
+    } else {
+      setInterval(() => {
+        phase = (phase + 1) % 4;
+        cards.forEach((c, idx) => {
+          if (idx === phase) {
+            c.classList.add('active');
+            statuses[idx].textContent = statusLabels[idx][Math.floor(Math.random() * 4)];
+          } else {
+            c.classList.remove('active');
+          }
+        });
+      }, 1800);
+    }
+  </script>
+</body>
+</html>

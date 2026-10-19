@@ -73,6 +73,39 @@ Default vs OnPush, `provideZonelessChangeDetection()`, Push-Pull Signal reactive
 
 ---
 
+### 5. 💉 [Services & Dependency Injection (`dependency-injection/`)](dependency-injection/README.md)
+Modern `inject()` API, Hierarchical Injector Trees (ElementInjector vs EnvironmentInjector), 8 types of services and provider scopes (`providedIn: 'root'`, `'platform'`, `'any'`, `providers`, `viewProviders`), resolution modifiers (`optional`, `self`, `skipSelf`, `host`), tree-shakable `InjectionToken` factories, `DestroyRef` teardown, and Signal state stores.
+
+- 📖 **Study Guide**: [`dependency-injection/README.md`](dependency-injection/README.md) (or [`dependency-injection/angular-services-dependency-injection-guide.md`](dependency-injection/angular-services-dependency-injection-guide.md))
+- 💻 **Practical Examples**:
+  - [`dependency-injection/examples/01-inject-function-vs-constructor.ts`](dependency-injection/examples/01-inject-function-vs-constructor.ts) — Modern `inject()` API, field initializers, type inference, and `runInInjectionContext()`.
+  - [`dependency-injection/examples/02-injector-hierarchy-resolution.ts`](dependency-injection/examples/02-injector-hierarchy-resolution.ts) — ElementInjector vs EnvironmentInjector traversal, NullInjector fallback.
+  - [`dependency-injection/examples/03-service-scopes-and-providers.ts`](dependency-injection/examples/03-service-scopes-and-providers.ts) — `providedIn: 'root'`, `'platform'`, `'any'`, and component-level providers.
+  - [`dependency-injection/examples/04-providers-vs-viewproviders.ts`](dependency-injection/examples/04-providers-vs-viewproviders.ts) — Content projection isolation and UI library widget token shielding.
+  - [`dependency-injection/examples/05-resolution-modifiers-self-host.ts`](dependency-injection/examples/05-resolution-modifiers-self-host.ts) — `optional`, `self`, `skipSelf`, `host`, and recursive tree node linking.
+  - [`dependency-injection/examples/06-injection-tokens-and-factories.ts`](dependency-injection/examples/06-injection-tokens-and-factories.ts) — Tree-shakable `InjectionToken` with factories, `useExisting`, and `multi: true`.
+  - [`dependency-injection/examples/07-signal-store-service-pattern.ts`](dependency-injection/examples/07-signal-store-service-pattern.ts) — Reactive signal store service, $O(1)$ reactivity, Zoneless ready.
+  - [`dependency-injection/examples/08-functional-services-and-destroyref.ts`](dependency-injection/examples/08-functional-services-and-destroyref.ts) — Composable functional services with automatic `DestroyRef` teardown.
+
+---
+
+## ⚡ Quick Cheat Sheet: Services & Dependency Injection (Angular 22)
+
+| Architectural Concern | Legacy Angular (< v14) | Modern Angular 22 (v16–v22+) | Under the Hood & Performance Impact |
+| :--- | :--- | :--- | :--- |
+| **Injection Syntax** | `constructor(private s: Svc)` | `private s = inject(Svc);` | Eliminates `emitDecoratorMetadata` runtime reflection. Enables seamless composition inside functions without class inheritance overhead. |
+| **Injection Context** | Constructor parameters only | Field initializers, constructor, or `runInInjectionContext()` | Requires active context where `getInjectable()` is bound. Fails with `NG0203` if invoked asynchronously outside context. |
+| **Injector Hierarchy** | ModuleInjector + ElementInjector | **EnvironmentInjector** + **ElementInjector** | Decoupled from legacy `NgModule`. Tied directly to `bootstrapApplication`, standalone route chunks, and environment initializers. |
+| **Root Singleton Scope** | `providedIn: 'root'` | `providedIn: 'root'` | Application-wide singleton. Fully tree-shakable: bundlers drop unreferenced services completely from production artifacts. |
+| **Platform Scope** | `providedIn: 'platform'` | `providedIn: 'platform'` | Shared across **multiple Angular applications** running in the same browser window (ideal for microfrontend host/remote coordination). |
+| **Component Scope** | `providers: [Svc]` | `providers: [Svc]` | New instance created per component in DOM. Visible to component template AND projected content (`<ng-content>`). |
+| **View Isolation Scope** | `viewProviders: [Svc]` | `viewProviders: [Svc]` | Restricts service instance strictly to component's own template; **hides** token from projected content (`<ng-content>`). |
+| **Resolution Modifiers** | `@Optional() @Self() @SkipSelf() @Host()` | `inject(Svc, { optional: true, self: true, skipSelf: true, host: true })` | Type-safe configuration object passed directly into `inject()`, eliminating parameter decorators and metadata reflection. |
+| **Lifecycle Teardown** | `ngOnDestroy()` in class | `inject(DestroyRef).onDestroy(...)` | Allows standalone functions, factory providers, and services to register cleanup callbacks without implementing component lifecycle interfaces. |
+| **State Reactivity** | `BehaviorSubject<T>` | `signal<T>()` + `computed()` | Fine-grained $O(1)$ reactivity with zero Zone.js overhead; integrates natively with `provideZonelessChangeDetection()`. |
+
+---
+
 ## ⚡ Quick Cheat Sheet: Change Detection & Rendering (Angular 22)
 
 | Architectural Concern / Strategy | Legacy Angular (< v16) | Modern Angular 22 (v16–v22+) | Under the Hood & Performance Impact |
@@ -123,6 +156,6 @@ Default vs OnPush, `provideZonelessChangeDetection()`, Push-Pull Signal reactive
 - [x] 🛡️ **HTTP Interceptors & Enterprise Authentication** (`interceptors/`)
 - [x] ⚡ **Change Detection & Rendering** (`change-detection/`)
 - [x] 🏎️ **Performance & Change Detection** (`change-detection/` - `OnPush`, detaching change detector, batching)
+- [x] 💉 **Dependency Injection** (`dependency-injection/` - `inject()`, hierarchical injectors, 8 service types, viewProviders)
 - [ ] 🔀 **Modern Control Flow** (`control-flow/` - `@if`, `@for`, `@defer`)
-- [ ] 💉 **Dependency Injection** (`dependency-injection/` - `inject()`, hierarchical injectors)
 - [ ] 🌐 **SSR & Hydration** (`ssr-hydration/` - Event replay, incremental hydration)
