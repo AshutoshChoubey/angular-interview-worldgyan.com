@@ -89,19 +89,21 @@ Modern `inject()` API, Hierarchical Injector Trees (ElementInjector vs Environme
 
 ---
 
-## ⚡ Quick Cheat Sheet: Services & Dependency Injection (Angular 22 Made Simple)
+## ⚡ Quick Cheat Sheet: Services & Dependency Injection Architecture (Angular 22)
 
-| Question / Concept | Modern Angular 22 | Plain English Explanation | Real-World Analogy |
+| Architecture Concern | What Problem It Solves | Real-World Production Scenario | Modern Angular 22 Syntax |
 | :--- | :--- | :--- | :--- |
-| **What is a Service?** | `@Injectable({ providedIn: 'root' })` | Centralizes business logic, API calls, and state outside components. | Kitchen Chef: cooks the food so the waiter doesn't have to. |
-| **What is DI?** | Framework delivers instances automatically | Angular manages creation & lifecycle; never write `new MyService()`. | Room service: dial for coffee; someone delivers it ready to drink. |
-| **`inject()` vs Constructor** | `private s = inject(Svc);` | Eliminates constructor parameter bloat, improves type inference. | Old: Filling 5-page paper form. New: 1-click order. |
-| **Root Scope** | `providedIn: 'root'` | App-wide singleton. Bundler drops it if unused (Tree-shakable). | Main building elevator: everyone in the building uses the same one. |
-| **Component Scope** | `@Component({ providers: [Svc] })` | Fresh instance per component; shared with child components. | Private room keycard: each hotel guest gets their own unique copy. |
-| **View Isolation** | `@Component({ viewProviders: [Svc] })` | Fresh instance for component view; **hidden** from `<ng-content>`. | Staff-only kitchen door: guests in dining room cannot touch or see inside. |
-| **Optional Resolution** | `inject(Svc, { optional: true })` | Returns `null` if not found anywhere instead of crashing. | "Do you have ketchup? If not, no worries, I'll eat without it." |
-| **SkipSelf Resolution** | `inject(Svc, { skipSelf: true })` | Skips current component; looks at parent element. | "Ask my manager, don't ask me." (Essential for recursive folder trees). |
-| **Memory Cleanup** | `.pipe(takeUntilDestroyed())` | Auto-cancels subscriptions when component or service is destroyed. | Sleep timer that turns off the TV automatically when you leave. |
+| **Service Class** | Eliminates 1,000-line components and duplicate API/state logic across pages. | Shared `AuthService` managing JWT tokens and user permissions across Header, Profile, and Checkout. | `@Injectable({ providedIn: 'root' })` |
+| **Dependency Injection (DI)** | Eliminates manual `new Svc(a, b, c)` instantiation and tight coupling. | Automatically wires `HttpClient` into `OrderService` without consumer needing to know dependencies. | `private order = inject(OrderService);` |
+| **`inject()` API** | Replaces clunky constructor parameter lists and removes TypeScript reflection metadata. | Clean field initializers; simplifies inheritance without `super(a, b, c)`. | `private http = inject(HttpClient);` |
+| **`providedIn: 'root'`** | Ensures single app-wide instance; **tree-shakable** (dropped if unreferenced). | Global application state, theme preferences, analytics pipelines. | `@Injectable({ providedIn: 'root' })` |
+| **Component `providers: []`** | Isolates state per component instance; automatically cleaned up on unmount. | Multistep checkout wizard draft (`CheckoutDraftService`), isolated form state. | `@Component({ providers: [DraftService] })` |
+| **Component `viewProviders: []`** | Restricts service access to component template; **shields from projected `<ng-content>`**. | UI widget library (e.g. Accordion/Modal) protecting internal state from external slot markup. | `@Component({ viewProviders: [ModalState] })` |
+| **`useClass`** | Swaps implementation at runtime (Strategy Pattern). | Providing `MockPaymentGateway` during local unit tests instead of `StripeGateway`. | `{ provide: Gateway, useClass: MockGateway }` |
+| **`useExisting`** | Aliases one token to an existing singleton without duplicating instances. | Refactoring legacy `UserService` to `UserProfileService` while sharing the exact same instance. | `{ provide: OldSvc, useExisting: NewSvc }` |
+| **`useValue`** | Injects static configurations, primitives, or environment URLs. | Multi-environment API endpoint URLs, feature flag objects. | `{ provide: API_URL, useValue: env.apiUrl }` |
+| **`useFactory`** | Computes dependency dynamically at runtime using injected dependencies. | Initializing third-party telemetry SDK requiring runtime authorization token. | `{ provide: SDK, useFactory: (auth) => ... }` |
+| **`takeUntilDestroyed()`** | Prevents memory leaks by auto-canceling RxJS streams when component/service dies. | Live stock ticker or WebSocket subscription in a component-scoped service. | `stream$.pipe(takeUntilDestroyed())` |
 
 ---
 
