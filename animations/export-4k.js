@@ -123,6 +123,7 @@
   };
 
   function getSceneKey(sceneName) {
+    if (sceneName.includes("form")) return "forms-architecture";
     if (sceneName.includes("service") || sceneName.includes("dependency-injection") || sceneName.includes("di-hierarchy")) return "services-di";
     if (sceneName.includes("change-detection") || sceneName.includes("rendering") || sceneName.includes("paint") || (sceneName.includes("pipeline") && !sceneName.includes("interceptor"))) return "change-detection";
     if (sceneName.includes("interceptor")) return "interceptor-pipeline";
@@ -2399,6 +2400,145 @@
     ctx.textAlign = "left";
   }
 
+  function drawFormsArchitectureScene(ctx, t, skipOuterBg) {
+    drawMacShell(ctx, "Forms Architecture", t, skipOuterBg);
+
+    // Top Header Banner
+    roundRect(ctx, 68, 114, 944, 82, 14);
+    ctx.fillStyle = "#111c33";
+    ctx.fill();
+    ctx.strokeStyle = "#1e293b";
+    ctx.lineWidth = 1;
+    ctx.stroke();
+
+    ctx.textAlign = "left";
+    ctx.font = "800 13px 'JetBrains Mono', monospace";
+    ctx.fillStyle = "#38bdf8";
+    ctx.fillText("ANGULAR 22 FORMS ARCHITECTURE · UNIFIED STATE & VALIDATION ENGINE", 92, 142);
+    ctx.font = "800 24px -apple-system, sans-serif";
+    ctx.fillStyle = "#ffffff";
+    ctx.fillText("Template-Driven vs. Typed Reactive vs. Signal Forms", 92, 172);
+
+    const activeCard = Math.floor((t * 3) % 3);
+
+    // 3 Paradigm Cards
+    const paradigms = [
+      { num: "01", name: "Template-Driven", sub: "FormsModule · [(ngModel)]", desc: "Asynchronous template-inferred model", col: "#fbbf24", bg: "rgba(251,191,36,0.14)" },
+      { num: "02", name: "Typed Reactive", sub: "FormGroup<T> · FormArray", desc: "Synchronous compile-time typed model", col: "#38bdf8", bg: "rgba(56,189,248,0.14)" },
+      { num: "03", name: "Signal Forms", sub: "toSignal() · linkedSignal()", desc: "O(1) synchronous reactivity & resets", col: "#c084fc", bg: "rgba(192,132,252,0.14)" }
+    ];
+
+    paradigms.forEach((p, idx) => {
+      const cx = 68 + idx * 324;
+      roundRect(ctx, cx, 206, 308, 172, 12);
+      ctx.fillStyle = idx === activeCard ? "#132142" : "#090e1c";
+      ctx.fill();
+      ctx.strokeStyle = idx === activeCard ? p.col : "#1e293b";
+      ctx.lineWidth = idx === activeCard ? 2 : 1;
+      ctx.stroke();
+
+      roundRect(ctx, cx + 14, 220, 88, 22, 5);
+      ctx.fillStyle = p.bg;
+      ctx.fill();
+      ctx.font = "800 11.5px 'JetBrains Mono', monospace";
+      ctx.fillStyle = p.col;
+      ctx.fillText("PARADIGM " + p.num, cx + 20, 235);
+
+      ctx.font = "800 18px -apple-system, sans-serif";
+      ctx.fillStyle = "#ffffff";
+      ctx.fillText(p.name, cx + 14, 268);
+
+      ctx.font = "700 12.5px 'JetBrains Mono', monospace";
+      ctx.fillStyle = p.col;
+      ctx.fillText(p.sub, cx + 14, 292);
+
+      ctx.font = "13px -apple-system, sans-serif";
+      ctx.fillStyle = "#94a3b8";
+      ctx.fillText(p.desc, cx + 14, 318);
+
+      ctx.font = "700 12px 'JetBrains Mono', monospace";
+      ctx.fillStyle = idx === activeCard ? "#34d399" : "#64748b";
+      ctx.fillText(idx === activeCard ? "● Active Paradigm" : "○ Available Scope", cx + 14, 348);
+    });
+
+    // Middle Split: Left Pane (Typed Reactive) & Right Pane (Signal Forms)
+    // Left Pane
+    roundRect(ctx, 68, 394, 464, 420, 12);
+    ctx.fillStyle = "#080d1a";
+    ctx.fill();
+    ctx.strokeStyle = "#1e293b";
+    ctx.lineWidth = 1;
+    ctx.stroke();
+
+    ctx.font = "800 13.5px 'JetBrains Mono', monospace";
+    ctx.fillStyle = "#38bdf8";
+    ctx.fillText("TYPED REACTIVE FORM MODEL", 88, 422);
+
+    const leftCode = [
+      { text: "private fb = inject(NonNullableFormBuilder);", col: "#e2e8f0" },
+      { text: "", col: "#94a3b8" },
+      { text: "readonly paymentForm = this.fb.group({", col: "#38bdf8" },
+      { text: "  name: ['', [Validators.required]],", col: "#f8fafc" },
+      { text: "  email: ['', [Validators.email]],", col: "#f8fafc" },
+      { text: "  items: this.fb.array<string>(['SKU-1']),", col: "#fbbf24" },
+      { text: "  toggles: this.fb.record<boolean>({})", col: "#c084fc" },
+      { text: "});", col: "#38bdf8" },
+      { text: "", col: "#94a3b8" },
+      { text: "// 100% strictly-typed raw payload (no nulls):", col: "#64748b" },
+      { text: "const payload = this.paymentForm.getRawValue();", col: "#34d399" },
+      { text: "this.paymentForm.markAllAsTouched();", col: "#f43f5e" }
+    ];
+
+    leftCode.forEach((ln, lIdx) => {
+      ctx.font = "14px 'JetBrains Mono', monospace";
+      ctx.fillStyle = ln.col;
+      ctx.fillText(ln.text, 88, 456 + lIdx * 25);
+    });
+
+    // Right Pane
+    roundRect(ctx, 548, 394, 464, 420, 12);
+    ctx.fillStyle = "#080d1a";
+    ctx.fill();
+    ctx.strokeStyle = "#1e293b";
+    ctx.lineWidth = 1;
+    ctx.stroke();
+
+    ctx.font = "800 13.5px 'JetBrains Mono', monospace";
+    ctx.fillStyle = "#c084fc";
+    ctx.fillText("SIGNAL FORMS & ZONELESS STATE", 568, 422);
+
+    const rightCode = [
+      { text: "// 1. Convert Reactive Form to Signal stream:", col: "#64748b" },
+      { text: "readonly formState = toSignal(", col: "#c084fc" },
+      { text: "  this.paymentForm.valueChanges,", col: "#f8fafc" },
+      { text: "  { initialValue: this.paymentForm.getRawValue() }", col: "#38bdf8" },
+      { text: ");", col: "#c084fc" },
+      { text: "", col: "#94a3b8" },
+      { text: "// 2. Synchronous O(1) derived validation:", col: "#64748b" },
+      { text: "readonly isValid = computed(() =>", col: "#34d399" },
+      { text: "  this.formState().name.trim().length >= 3", col: "#f8fafc" },
+      { text: ");", col: "#34d399" },
+      { text: "", col: "#94a3b8" },
+      { text: "// 3. Reset draft synchronously on prop changes:", col: "#64748b" },
+      { text: "readonly draft = linkedSignal(() => this.user());", col: "#fbbf24" }
+    ];
+
+    rightCode.forEach((ln, rIdx) => {
+      ctx.font = "14px 'JetBrains Mono', monospace";
+      ctx.fillStyle = ln.col;
+      ctx.fillText(ln.text, 568, 456 + rIdx * 25);
+    });
+
+    // Footer
+    ctx.font = "700 13px 'JetBrains Mono', monospace";
+    ctx.fillStyle = "#94a3b8";
+    ctx.fillText("Unified Controls: FormControl, FormGroup, FormArray, FormRecord, CVA | O(1) Zoneless Signals", 68, 974);
+    ctx.textAlign = "right";
+    ctx.fillStyle = "#38bdf8";
+    ctx.fillText("worldgyan.com · Ashutosh Kumar Choubey", 1012, 974);
+    ctx.textAlign = "left";
+  }
+
   function drawCore1080Scene(ctx, sceneKey, normTime, skipOuterBg) {
     ctx.save();
     if (skipOuterBg) {
@@ -2407,7 +2547,9 @@
       ctx.scale(1.036, 1.036);
       ctx.translate(-540, -540);
     }
-    if (sceneKey === "services-di") {
+    if (sceneKey === "forms-architecture") {
+      drawFormsArchitectureScene(ctx, normTime, skipOuterBg);
+    } else if (sceneKey === "services-di") {
       drawServicesDiHierarchyScene(ctx, normTime, skipOuterBg);
     } else if (sceneKey === "interceptor-pipeline") {
       drawInterceptorPipelineScene(ctx, normTime, skipOuterBg);

@@ -89,6 +89,38 @@ Modern `inject()` API, Hierarchical Injector Trees (ElementInjector vs Environme
 
 ---
 
+### 6. 📝 [Forms Architecture: Template-Driven, Strictly Typed Reactive & Signal Forms (`forms/`)](forms/README.md)
+Unified `AbstractControl` state container (`value`, `status`, `dirty`/`pristine`, `touched`/`untouched`), comparison of the 3 form paradigms, `NonNullableFormBuilder`, dynamic `FormArray` & `FormRecord`, synchronous/debounced async with switchMap & cross-field validation, `ControlValueAccessor` (CVA) vs Signal `model()`, and pure Signal form architecture with `linkedSignal()` draft resets.
+
+- 📖 **Study Guide**: [`forms/README.md`](forms/README.md) (or [`forms/angular-forms-architecture-guide.md`](forms/angular-forms-architecture-guide.md))
+- 💻 **Practical Examples**:
+  - [`forms/examples/01-template-driven-form-basics.ts`](forms/examples/01-template-driven-form-basics.ts) — Template-driven newsletter subscription with `[(ngModel)]` and template reference variables.
+  - [`forms/examples/02-typed-reactive-form-validation.ts`](forms/examples/02-typed-reactive-form-validation.ts) — Enterprise Checkout Payment Form using `NonNullableFormBuilder`, regex pattern matching, and `getRawValue()`.
+  - [`forms/examples/03-dynamic-form-array.ts`](forms/examples/03-dynamic-form-array.ts) — Dynamic line items & purchase invoice editor with `FormArray` and live financial calculations.
+  - [`forms/examples/04-async-validator-unique-email.ts`](forms/examples/04-async-validator-unique-email.ts) — Debounced async validator with `timer(400)` and `switchMap` cancellation for unique corporate email checks.
+  - [`forms/examples/05-cross-field-password-validator.ts`](forms/examples/05-cross-field-password-validator.ts) — Synchronous group-level cross-field validation comparing `newPassword` and `confirmPassword`.
+  - [`forms/examples/06-control-value-accessor-custom-input.ts`](forms/examples/06-control-value-accessor-custom-input.ts) — 5-star risk rating widget implementing `ControlValueAccessor` compared to modern Angular 22 `model()`.
+  - [`forms/examples/07-reactive-forms-to-signals-interop.ts`](forms/examples/07-reactive-forms-to-signals-interop.ts) — Bridging Reactive Forms into Signals using `toSignal()` with $O(1)$ computed pricing and volume discounts.
+  - [`forms/examples/08-pure-signal-forms-architecture.ts`](forms/examples/08-pure-signal-forms-architecture.ts) — Pure Signal forms architecture using `signal()`, `linkedSignal()` for draft state resets, and `computed()` validation.
+
+---
+
+## ⚡ Quick Cheat Sheet: Forms Architecture (Angular 22)
+
+| Architecture Concern | Template-Driven Forms | Strictly Typed Reactive Forms | Signal Forms (Modern Angular 22) |
+| :--- | :--- | :--- | :--- |
+| **Primary Module / Import** | `FormsModule` | `ReactiveFormsModule` | `@angular/core` (`signal`, `computed`, `linkedSignal`) |
+| **Model Creation** | Implicit / Asynchronous in template (`[(ngModel)]`) | Explicit / Synchronous in TypeScript (`new FormGroup({...})`) | Declarative Signal graph (`signal()`, `linkedSignal()`) |
+| **Source of Truth** | HTML Template directives (`#form="ngForm"`) | TypeScript Component model (`FormGroup`) | Writable & Computed Signal state |
+| **Type Safety** | Loose / Template-inferred (`any` historically) | Strict compile-time TypeScript (`FormGroup<{...}>`) | Pure native TypeScript type inference |
+| **Reactivity Primitive** | Asynchronous events via two-way binding | RxJS Observables (`valueChanges`, `statusChanges`) | Push-pull synchronous Signals ($O(1)$) |
+| **Change Detection** | Requires Zone.js / event-driven checks | Zone.js or RxJS `\| async` bridge | Native Zoneless compatible ($O(1)$ surgical updates) |
+| **Dynamic Form Controls** | Difficult (requires template directive loops) | Native via `FormArray` and `FormRecord` | Native via mutable array signals `signal<T[]>([])` |
+| **Testability** | Requires DOM rendering & asynchronous fixtures | 100% unit testable in pure TypeScript without DOM | 100% unit testable synchronously without DOM |
+| **Best Production Use Case** | Simple search filters, login, single-field inputs | Multi-step checkout wizards, complex dynamic enterprise forms | High-frequency dashboards, zoneless forms, modern signal apps |
+
+---
+
 ## ⚡ Quick Cheat Sheet: Services & Dependency Injection Architecture (Angular 22)
 
 | Architecture Concern | What Problem It Solves | Real-World Production Scenario | Modern Angular 22 Syntax |
@@ -158,5 +190,6 @@ Modern `inject()` API, Hierarchical Injector Trees (ElementInjector vs Environme
 - [x] ⚡ **Change Detection & Rendering** (`change-detection/`)
 - [x] 🏎️ **Performance & Change Detection** (`change-detection/` - `OnPush`, detaching change detector, batching)
 - [x] 💉 **Dependency Injection** (`dependency-injection/` - `inject()`, hierarchical injectors, 8 service types, viewProviders)
+- [x] 📝 **Forms Architecture** (`forms/` - Template-Driven, Typed Reactive, Signal Forms, FormArray, CVA, linkedSignal)
 - [ ] 🔀 **Modern Control Flow** (`control-flow/` - `@if`, `@for`, `@defer`)
 - [ ] 🌐 **SSR & Hydration** (`ssr-hydration/` - Event replay, incremental hydration)

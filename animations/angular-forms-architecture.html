@@ -1,0 +1,457 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Angular 22 Forms Architecture: Template-Driven, Reactive &amp; Signal Forms (1080x1080 macOS Animation)</title>
+  <style>
+    :root {
+      --bg-outer: #060a14;
+      --slate-bg: #0f172a;
+      --slate-deep: #090e1c;
+      --slate-card: #111c33;
+      --slate-border: #1e293b;
+      --slate-muted: #94a3b8;
+      --text-main: #f8fafc;
+      --text-secondary: #cbd5e1;
+      --cyan: #38bdf8;
+      --emerald: #34d399;
+      --purple: #c084fc;
+      --amber: #fbbf24;
+      --rose: #f43f5e;
+      --red-dot: #ff5f56;
+      --yellow-dot: #ffbd2e;
+      --green-dot: #27c93f;
+      --font-sans: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', Roboto, sans-serif;
+      --font-mono: 'JetBrains Mono', 'Fira Code', Consolas, monospace;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html, body {
+      width: 100%;
+      height: 100%;
+      background: var(--bg-outer);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: var(--font-sans);
+      color: var(--text-main);
+      overflow: hidden;
+    }
+
+    .stage-1080 {
+      width: 1080px;
+      height: 1080px;
+      min-width: 1080px;
+      min-height: 1080px;
+      background:
+        radial-gradient(circle at 20% 20%, rgba(56, 189, 248, 0.16) 0%, transparent 45%),
+        radial-gradient(circle at 80% 80%, rgba(192, 132, 252, 0.16) 0%, transparent 45%),
+        var(--slate-bg);
+      padding: 40px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+    }
+
+    .stage-1080::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background-image:
+        linear-gradient(to right, rgba(56, 189, 248, 0.04) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(56, 189, 248, 0.04) 1px, transparent 1px);
+      background-size: 36px 36px;
+      pointer-events: none;
+    }
+
+    .macos-window {
+      width: 1000px;
+      height: 1000px;
+      background: rgba(9, 14, 28, 0.98);
+      border: 1.5px solid rgba(56, 189, 248, 0.35);
+      border-radius: 20px;
+      box-shadow: 0 32px 80px rgba(0, 0, 0, 0.85), 0 0 40px rgba(56, 189, 248, 0.14);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      position: relative;
+      z-index: 2;
+    }
+
+    .window-titlebar {
+      height: 56px;
+      background: #0d1527;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 22px;
+    }
+
+    .window-dots {
+      display: flex;
+      gap: 8px;
+    }
+    .window-dot { width: 12px; height: 12px; border-radius: 50%; }
+    .window-dot.red { background: var(--red-dot); }
+    .window-dot.yellow { background: var(--yellow-dot); }
+    .window-dot.green { background: var(--green-dot); }
+
+    .window-title {
+      font-family: var(--font-mono);
+      font-size: 13.5px;
+      font-weight: 700;
+      color: var(--cyan);
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+    }
+
+    .window-badge {
+      font-size: 13px;
+      font-weight: 700;
+      color: #94a3b8;
+      background: rgba(148, 163, 184, 0.12);
+      padding: 5px 12px;
+      border-radius: 6px;
+      border: 1px solid rgba(148, 163, 184, 0.22);
+    }
+
+    .window-body {
+      flex: 1;
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+    }
+
+    /* Hero Header */
+    .hero-banner {
+      background: linear-gradient(135deg, rgba(17, 28, 51, 0.95), rgba(9, 14, 28, 0.95));
+      border: 1px solid rgba(56, 189, 248, 0.28);
+      border-radius: 14px;
+      padding: 16px 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .hero-kicker {
+      font-family: var(--font-mono);
+      font-size: 13px;
+      font-weight: 800;
+      color: var(--cyan);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      margin-bottom: 4px;
+      display: block;
+    }
+
+    .hero-title {
+      font-size: 24px;
+      font-weight: 800;
+      color: #ffffff;
+      letter-spacing: -0.02em;
+    }
+
+    .hero-pill {
+      font-family: var(--font-mono);
+      font-size: 13px;
+      font-weight: 800;
+      background: rgba(52, 211, 153, 0.16);
+      color: var(--emerald);
+      border: 1px solid rgba(52, 211, 153, 0.35);
+      padding: 6px 14px;
+      border-radius: 999px;
+    }
+
+    /* 3-Column Paradigm Grid */
+    .paradigm-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 14px;
+      position: relative;
+    }
+
+    .paradigm-card {
+      background: #0b1222;
+      border: 1px solid #1e293b;
+      border-radius: 12px;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      position: relative;
+      transition: all 0.3s ease;
+    }
+
+    .paradigm-card.active {
+      border-color: var(--cyan);
+      box-shadow: 0 0 24px rgba(56, 189, 248, 0.25);
+      background: #0e1a33;
+    }
+
+    .card-badge {
+      display: inline-block;
+      align-self: flex-start;
+      font-family: var(--font-mono);
+      font-size: 11px;
+      font-weight: 800;
+      padding: 3px 8px;
+      border-radius: 4px;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+    .badge-template { background: rgba(245, 158, 11, 0.18); color: var(--amber); border: 1px solid rgba(245, 158, 11, 0.35); }
+    .badge-reactive { background: rgba(56, 189, 248, 0.18); color: var(--cyan); border: 1px solid rgba(56, 189, 248, 0.35); }
+    .badge-signal { background: rgba(192, 132, 252, 0.18); color: var(--purple); border: 1px solid rgba(192, 132, 252, 0.35); }
+
+    .card-title {
+      font-size: 16px;
+      font-weight: 800;
+      color: #ffffff;
+      line-height: 1.3;
+    }
+
+    .card-desc {
+      font-size: 12.5px;
+      color: var(--slate-muted);
+      line-height: 1.5;
+    }
+
+    .card-spec-list {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      margin-top: 4px;
+    }
+    .card-spec-list li {
+      font-family: var(--font-mono);
+      font-size: 11.5px;
+      color: #e2e8f0;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .card-spec-list li strong { color: var(--cyan); }
+
+    /* Split Architecture Panes */
+    .split-panes {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+      flex: 1;
+    }
+
+    .pane {
+      background: #080d1a;
+      border: 1px solid #1e293b;
+      border-radius: 12px;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      overflow: hidden;
+    }
+
+    .pane-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+      padding-bottom: 8px;
+    }
+
+    .pane-title {
+      font-family: var(--font-mono);
+      font-size: 13px;
+      font-weight: 800;
+      color: var(--cyan);
+      text-transform: uppercase;
+    }
+
+    .pane-tag {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--emerald);
+      background: rgba(52, 211, 153, 0.12);
+      padding: 2px 8px;
+      border-radius: 4px;
+    }
+
+    .code-preview {
+      font-family: var(--font-mono);
+      font-size: 14px;
+      line-height: 1.55;
+      color: #e2e8f0;
+      background: #050811;
+      padding: 12px;
+      border-radius: 8px;
+      border: 1px solid #1a253a;
+      flex: 1;
+      overflow-x: auto;
+    }
+    .code-preview .kw { color: #f43f5e; font-weight: 700; }
+    .code-preview .fn { color: #38bdf8; }
+    .code-preview .str { color: #34d399; }
+    .code-preview .prop { color: #fbbf24; }
+    .code-preview .cm { color: #64748b; font-style: italic; }
+
+    /* Footer Action Bar */
+    .footer-bar {
+      height: 48px;
+      background: #0d1527;
+      border-top: 1px solid rgba(255, 255, 255, 0.08);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 20px;
+      font-family: var(--font-mono);
+      font-size: 12px;
+      color: #94a3b8;
+    }
+
+    .footer-bar a {
+      color: var(--cyan);
+      text-decoration: none;
+      font-weight: 700;
+    }
+  </style>
+</head>
+<body>
+  <div class="stage-1080">
+    <div class="macos-window">
+      <!-- Titlebar -->
+      <div class="window-titlebar">
+        <div class="window-dots">
+          <span class="window-dot red"></span>
+          <span class="window-dot yellow"></span>
+          <span class="window-dot green"></span>
+        </div>
+        <div class="window-title">Angular 22 Forms Architecture: Template · Reactive · Signals</div>
+        <div class="window-badge">1080×1080 · 4K Ready</div>
+      </div>
+
+      <!-- Body -->
+      <div class="window-body">
+        <!-- Hero Header -->
+        <div class="hero-banner">
+          <div>
+            <span class="hero-kicker">Unified Form State Engine</span>
+            <h1 class="hero-title">Angular 22 Forms Architecture</h1>
+          </div>
+          <div class="hero-pill">3 Paradigms Matrix</div>
+        </div>
+
+        <!-- 3-Column Paradigm Grid -->
+        <div class="paradigm-grid">
+          <!-- Card 1: Template-Driven -->
+          <div class="paradigm-card" id="card-template">
+            <span class="card-badge badge-template">Paradigm 01</span>
+            <h3 class="card-title">Template-Driven Forms</h3>
+            <p class="card-desc">Asynchronous model inferred by template directives. Ideal for simple inputs &amp; filters.</p>
+            <ul class="card-spec-list">
+              <li><strong>Module:</strong> FormsModule</li>
+              <li><strong>Binding:</strong> [(ngModel)]</li>
+              <li><strong>Truth:</strong> DOM Template</li>
+            </ul>
+          </div>
+
+          <!-- Card 2: Strictly Typed Reactive -->
+          <div class="paradigm-card active" id="card-reactive">
+            <span class="card-badge badge-reactive">Paradigm 02</span>
+            <h3 class="card-title">Typed Reactive Forms</h3>
+            <p class="card-desc">Synchronous, strictly-typed model declared in TypeScript. Enterprise multi-step wizards &amp; FormArray.</p>
+            <ul class="card-spec-list">
+              <li><strong>Module:</strong> ReactiveFormsModule</li>
+              <li><strong>Model:</strong> FormGroup &lt;T&gt;</li>
+              <li><strong>Dynamic:</strong> FormArray &amp; FormRecord</li>
+            </ul>
+          </div>
+
+          <!-- Card 3: Signal Forms -->
+          <div class="paradigm-card" id="card-signal">
+            <span class="card-badge badge-signal">Paradigm 03</span>
+            <h3 class="card-title">Signal Forms (Modern)</h3>
+            <p class="card-desc">Fine-grained O(1) synchronous reactivity. toSignal() bridge + linkedSignal() draft resets.</p>
+            <ul class="card-spec-list">
+              <li><strong>Core:</strong> toSignal(valueChanges)</li>
+              <li><strong>Derived:</strong> computed() validation</li>
+              <li><strong>Resets:</strong> linkedSignal() sync</li>
+            </ul>
+          </div>
+        </div>
+
+        <!-- Split Architecture Panes -->
+        <div class="split-panes">
+          <!-- Left: Typed Reactive Code -->
+          <div class="pane">
+            <div class="pane-header">
+              <span class="pane-title">Typed Reactive Form Model</span>
+              <span class="pane-tag">Strict TypeScript</span>
+            </div>
+            <pre class="code-preview"><code><span class="kw">private</span> fb = <span class="fn">inject</span>(NonNullableFormBuilder);
+
+<span class="kw">readonly</span> checkoutForm = <span class="kw">this</span>.fb.<span class="fn">group</span>({
+  cardholderName: [<span class="str">''</span>, [Validators.required]],
+  billingEmail: [<span class="str">''</span>, [Validators.email]],
+  items: <span class="kw">this</span>.fb.<span class="fn">array</span>&lt;<span class="kw">string</span>&gt;([<span class="str">'SKU-101'</span>])
+});
+
+<span class="cm">// 100% typed raw value (no nulls):</span>
+<span class="kw">const</span> payload = <span class="kw">this</span>.checkoutForm.<span class="fn">getRawValue</span>();</code></pre>
+          </div>
+
+          <!-- Right: Signal Interop & Pure Signal State -->
+          <div class="pane">
+            <div class="pane-header">
+              <span class="pane-title">Signal Forms &amp; Zoneless State</span>
+              <span class="pane-tag">O(1) Reactive</span>
+            </div>
+            <pre class="code-preview"><code><span class="cm">// 1. Reactive Form -> Signal bridge:</span>
+<span class="kw">readonly</span> formState = <span class="fn">toSignal</span>(
+  <span class="kw">this</span>.checkoutForm.valueChanges,
+  { initialValue: <span class="kw">this</span>.checkoutForm.<span class="fn">getRawValue</span>() }
+);
+
+<span class="cm">// 2. Derived computed validation:</span>
+<span class="kw">readonly</span> isValid = <span class="fn">computed</span>(() =&gt; 
+  <span class="kw">this</span>.formState().cardholderName.length &gt; <span class="str">3</span>
+);
+
+<span class="cm">// 3. Automatic reset with linkedSignal:</span>
+<span class="kw">readonly</span> draft = <span class="fn">linkedSignal</span>(() =&gt; <span class="kw">this</span>.<span class="fn">initialData</span>());</code></pre>
+          </div>
+        </div>
+      </div>
+
+      <!-- Footer Bar -->
+      <div class="footer-bar">
+        <span>worldgyan.com · Architecture Series Part 15</span>
+        <a href="https://github.com/AshutoshChoubey/angular-interview-worldgyan.com" target="_blank">github.com/AshutoshChoubey/angular-interview-worldgyan.com &rarr;</a>
+      </div>
+    </div>
+  </div>
+
+  <script src="/animations/export-4k.js" data-scene="forms-architecture"></script>
+  <script>
+    // Live pulse animation across the 3 paradigms
+    let activeIndex = 1;
+    const cards = [
+      document.getElementById('card-template'),
+      document.getElementById('card-reactive'),
+      document.getElementById('card-signal')
+    ];
+
+    setInterval(() => {
+      cards[activeIndex].classList.remove('active');
+      activeIndex = (activeIndex + 1) % 3;
+      cards[activeIndex].classList.add('active');
+    }, 2200);
+  </script>
+</body>
+</html>
