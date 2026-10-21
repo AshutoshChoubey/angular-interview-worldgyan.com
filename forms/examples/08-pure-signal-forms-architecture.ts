@@ -275,3 +275,4 @@ export class PureSignalProfileFormComponent {
     }, 800);
   }
 }
+

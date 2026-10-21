@@ -518,3 +518,4 @@ export class SearchInputComponent {
 | [`06-control-value-accessor-custom-input.ts`](./examples/06-control-value-accessor-custom-input.ts) | Enterprise Risk 5-star rating widget implementing `ControlValueAccessor` contrasted with modern `model()` input. |
 | [`07-reactive-forms-to-signals-interop.ts`](./examples/07-reactive-forms-to-signals-interop.ts) | Bridging Reactive Forms into Signals using `toSignal()` with $O(1)$ computed pricing and volume discounts. |
 | [`08-pure-signal-forms-architecture.ts`](./examples/08-pure-signal-forms-architecture.ts) | Pure Signal forms architecture using `signal()`, `linkedSignal()` for draft state resets, and `computed()` validation. |
+

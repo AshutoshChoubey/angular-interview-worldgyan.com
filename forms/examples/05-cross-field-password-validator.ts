@@ -146,3 +146,4 @@ export class CrossFieldPasswordValidatorComponent {
     }, 900);
   }
 }
+

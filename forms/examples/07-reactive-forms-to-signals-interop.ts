@@ -152,3 +152,4 @@ export class FormSignalsBridgeComponent {
     return (seats * base * discount) + aiFee;
   });
 }
+

@@ -109,3 +109,4 @@ With Angular 18–22 introducing `provideExperimentalZonelessChangeDetection()` 
 | **Validation Trigger** | HTML validation attributes | Pure TypeScript functions | Pure `computed()` signals |
 | **Async Operations** | Directives (`ngAsyncValidator`) | `AsyncValidatorFn` + RxJS | `resource()` or RxJS bridge |
 | **Zoneless Readiness** | Requires manual notifications | Excellent with `toSignal` | Native $O(1)$ optimal |
+
