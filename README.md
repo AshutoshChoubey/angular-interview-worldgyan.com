@@ -18,6 +18,7 @@ This repository is organized into **modular topic folders**. Each topic has its 
 The modern reactivity model across Angular 16 – 22+ (including `linkedSignal`, `resource`, and default Zoneless).
 
 - 📖 **Study Guide**: [`signals/README.md`](signals/README.md) (or [`signals/angular-signals-interview-guide.md`](signals/angular-signals-interview-guide.md))
+- 📄 **Printable Vector PDF**: [`assets/angular-signals-complete-study-notes.pdf`](assets/angular-signals-complete-study-notes.pdf) — Complete 8-slide high-density plain canvas study deck.
 - 💻 **Practical Examples**:
   - [`signals/examples/signals-basics.ts`](signals/examples/signals-basics.ts) — Writable signals (`signal()`, `.set()`, `.update()`) & immutability.
   - [`signals/examples/computed-and-dynamic-deps.ts`](signals/examples/computed-and-dynamic-deps.ts) — `computed()`, dynamic dependency tracking, memoization, `untracked()`, custom equality.
