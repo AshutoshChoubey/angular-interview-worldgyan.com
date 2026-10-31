@@ -1,6 +1,6 @@
 # NgRx State Management & Enterprise Reactivity
 
-> 🌐 **Live Production Demo:** [https://rm.worldgyan.com/](https://rm.worldgyan.com/) — Reference enterprise application implementing this exact NgRx state machine architecture.
+> 🌐 **Live Production Demo:** <a href="https://rm.worldgyan.com/" target="_blank" rel="noopener noreferrer">https://rm.worldgyan.com/</a> — Reference enterprise application implementing this exact NgRx state machine architecture.
 
 A comprehensive architectural breakdown of **NgRx 19+**, reactive side-effect orchestration with `@ngrx/effects`, memoized selectors, Signal-Store interop via `store.selectSignal()`, and Cloudflare Pages SPA deployment patterns.
 
@@ -271,7 +271,7 @@ export class CharacterListComponent implements OnInit, OnDestroy {
 
 ## 8. Cloudflare Pages SPA Deployment & Fallbacks
 
-When deploying Angular SPAs to Cloudflare Pages:
+When deploying Angular SPAs to Cloudflare Pages (verified live on <a href="https://rm.worldgyan.com/" target="_blank" rel="noopener noreferrer">https://rm.worldgyan.com/</a>):
 1. **Never use `/* /index.html 200` in `_redirects`:** Wrangler flags code `100324` (Infinite loop detected) because Cloudflare automatically strips `.html` extensions.
 2. **Native SPA Fallback:** Cloudflare Pages automatically serves `index.html` with HTTP 200 for all client-side routes if no `404.html` exists in the publish directory.
 3. **Static Fallback Copy (`200.html`):** Add a post-build script copying `index.html` to `200.html`:

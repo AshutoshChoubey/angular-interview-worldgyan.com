@@ -1,8 +1,8 @@
 # Angular 22 Services & Dependency Injection Architecture Guide: Real-World Field Notes
 
 > **Author:** Ashutosh Kumar Choubey  
-> **Repository:** [angular-interview-worldgyan.com](https://github.com/AshutoshChoubey/angular-interview-worldgyan.com)  
-> **Course Module:** [worldgyan.com/courses/angular-architecture/](https://worldgyan.com/courses/angular-architecture/)  
+> **Repository:** <a href="https://github.com/AshutoshChoubey/angular-interview-worldgyan.com" target="_blank" rel="noopener noreferrer">angular-interview-worldgyan.com</a>  
+> **Course Module:** <a href="https://worldgyan.com/courses/angular-architecture/" target="_blank" rel="noopener noreferrer">worldgyan.com/courses/angular-architecture/</a>  
 > **Architecture Animations:** [`animations/angular-services-di-hierarchy.html`](../animations/angular-services-di-hierarchy.html) · [`animations/angular-services-di-hierarchy.gif`](../animations/angular-services-di-hierarchy.gif)
 
 ---

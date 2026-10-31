@@ -1,5 +1,5 @@
 <p align="center">
-  <a href="https://worldgyan.com">
+  <a href="https://worldgyan.com" target="_blank" rel="noopener noreferrer">
     <img src="assets/logo-banner.png" alt="WorldGyan - Next-Gen AI & Engineering" width="640" />
   </a>
 </p>
@@ -109,6 +109,7 @@ Unified `AbstractControl` state container (`value`, `status`, `dirty`/`pristine`
 ### 7. 🏪 [NgRx State Management & Enterprise Reactivity (`ngrx/`)](ngrx/README.md)
 Deterministic unidirectional data flow, strongly typed action creators (`createAction`), immutable state reducers (`createReducer`), asynchronous side-effects (`@ngrx/effects`) with `ofType` filtering and `switchMap` request cancellation, memoized selectors (`createSelector`), Signal-Store bridge via `store.selectSignal()`, and Cloudflare Pages SPA deployment fallbacks.
 
+- 🌐 **Live Reference Application:** <a href="https://rm.worldgyan.com/" target="_blank" rel="noopener noreferrer">https://rm.worldgyan.com/</a>
 - 📖 **Study Guide**: [`ngrx/README.md`](ngrx/README.md)
 - 💻 **Practical Examples**:
   - [`ngrx/examples/ngrx-store-architecture.ts`](ngrx/examples/ngrx-store-architecture.ts) — Production-grade NgRx store, effects pipeline with `switchMap` request cancellation, memoized selectors, and standalone component signal bindings.
