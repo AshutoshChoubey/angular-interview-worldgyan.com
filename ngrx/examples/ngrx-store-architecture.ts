@@ -220,3 +220,4 @@ export class CharacterDirectoryComponent implements OnInit, OnDestroy {
     this.subscriptions.unsubscribe();
   }
 }
+

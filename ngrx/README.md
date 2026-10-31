@@ -1,5 +1,7 @@
 # NgRx State Management & Enterprise Reactivity
 
+> 🌐 **Live Production Demo:** [https://rm.worldgyan.com/](https://rm.worldgyan.com/) — Reference enterprise application implementing this exact NgRx state machine architecture.
+
 A comprehensive architectural breakdown of **NgRx 19+**, reactive side-effect orchestration with `@ngrx/effects`, memoized selectors, Signal-Store interop via `store.selectSignal()`, and Cloudflare Pages SPA deployment patterns.
 
 ---
@@ -291,3 +293,4 @@ When deploying Angular SPAs to Cloudflare Pages:
 > **Answer:**
 > - `concatMap`: Queues requests sequentially (e.g., batch uploads or transactional payments where ordering is mandatory).
 > - `exhaustMap`: Ignores new incoming actions until the current request completes (e.g., login buttons or form submission to prevent double-click duplicate payments).
+
