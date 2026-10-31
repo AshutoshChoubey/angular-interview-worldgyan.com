@@ -106,6 +106,15 @@ Unified `AbstractControl` state container (`value`, `status`, `dirty`/`pristine`
 
 ---
 
+### 7. 🏪 [NgRx State Management & Enterprise Reactivity (`ngrx/`)](ngrx/README.md)
+Deterministic unidirectional data flow, strongly typed action creators (`createAction`), immutable state reducers (`createReducer`), asynchronous side-effects (`@ngrx/effects`) with `ofType` filtering and `switchMap` request cancellation, memoized selectors (`createSelector`), Signal-Store bridge via `store.selectSignal()`, and Cloudflare Pages SPA deployment fallbacks.
+
+- 📖 **Study Guide**: [`ngrx/README.md`](ngrx/README.md)
+- 💻 **Practical Examples**:
+  - [`ngrx/examples/ngrx-store-architecture.ts`](ngrx/examples/ngrx-store-architecture.ts) — Production-grade NgRx store, effects pipeline with `switchMap` request cancellation, memoized selectors, and standalone component signal bindings.
+
+---
+
 ## ⚡ Quick Cheat Sheet: Forms Architecture (Angular 22)
 
 | Architecture Concern | Template-Driven Forms | Strictly Typed Reactive Forms | Signal Forms (Modern Angular 22) |
@@ -192,5 +201,6 @@ Unified `AbstractControl` state container (`value`, `status`, `dirty`/`pristine`
 - [x] 🏎️ **Performance & Change Detection** (`change-detection/` - `OnPush`, detaching change detector, batching)
 - [x] 💉 **Dependency Injection** (`dependency-injection/` - `inject()`, hierarchical injectors, 8 service types, viewProviders)
 - [x] 📝 **Forms Architecture** (`forms/` - Template-Driven, Typed Reactive, Signal Forms, FormArray, CVA, linkedSignal)
+- [x] 🏪 **NgRx State Management** (`ngrx/` - createAction, createReducer, effects, ofType, switchMap, selectSignal)
 - [ ] 🔀 **Modern Control Flow** (`control-flow/` - `@if`, `@for`, `@defer`)
 - [ ] 🌐 **SSR & Hydration** (`ssr-hydration/` - Event replay, incremental hydration)
