@@ -18,3 +18,4 @@ export interface TopologyNode {
   cpuLoad: number;
   memoryUsed: number;
 }
+

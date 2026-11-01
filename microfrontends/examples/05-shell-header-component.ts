@@ -228,3 +228,4 @@ export class ShellHeaderComponent {
     this.authService.logout().subscribe();
   }
 }
+

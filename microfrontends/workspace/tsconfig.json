@@ -1,6 +1,8 @@
 {
   "compileOnSave": false,
   "compilerOptions": {
+    "baseUrl": "./",
+    "ignoreDeprecations": "6.0",
     "outDir": "./dist/out-tsc",
     "strict": true,
     "noImplicitOverride": true,
@@ -16,7 +18,7 @@
     "target": "ES2022",
     "module": "ES2022",
     "paths": {
-      "@shared/core": ["projects/shared-core/src/index.ts"]
+      "@shared/core": ["./projects/shared-core/src/index.ts"]
     }
   },
   "angularCompilerOptions": {

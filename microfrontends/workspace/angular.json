@@ -1,0 +1,333 @@
+{
+  "$schema": "./node_modules/@angular/cli/lib/config/schema.json",
+  "version": 1,
+  "newProjectRoot": "apps",
+  "projects": {
+    "gui-aggregator-service": {
+      "projectType": "application",
+      "schematics": {},
+      "root": "apps/gui-aggregator-service",
+      "sourceRoot": "apps/gui-aggregator-service/src",
+      "prefix": "app",
+      "architect": {
+        "esbuild": {
+          "builder": "@angular/build:application",
+          "options": {
+            "outputPath": "dist/gui-aggregator-service",
+            "index": "apps/gui-aggregator-service/src/index.html",
+            "browser": "apps/gui-aggregator-service/src/main.ts",
+            "tsConfig": "apps/gui-aggregator-service/tsconfig.app.json",
+            "assets": [
+              {
+                "glob": "**/*",
+                "input": "apps/gui-aggregator-service/src/assets",
+                "output": "assets"
+              }
+            ],
+            "styles": [
+              "apps/gui-aggregator-service/src/styles.css"
+            ],
+            "scripts": []
+          },
+          "configurations": {
+            "production": {
+              "optimization": true,
+              "extractLicenses": true,
+              "sourceMap": false
+            },
+            "development": {
+              "optimization": false,
+              "extractLicenses": false,
+              "sourceMap": true
+            }
+          },
+          "defaultConfiguration": "production"
+        },
+        "build": {
+          "builder": "@angular-architects/native-federation:build",
+          "options": {
+            "target": "gui-aggregator-service:esbuild:production",
+            "rebuildDelay": 500,
+            "federationConfigPath": "apps/gui-aggregator-service/federation.config.js"
+          },
+          "configurations": {
+            "production": {
+              "target": "gui-aggregator-service:esbuild:production"
+            },
+            "development": {
+              "target": "gui-aggregator-service:esbuild:development",
+              "dev": true
+            }
+          },
+          "defaultConfiguration": "production"
+        },
+        "serve-original": {
+          "builder": "@angular/build:dev-server",
+          "options": {
+            "port": 4200
+          },
+          "configurations": {
+            "production": {
+              "buildTarget": "gui-aggregator-service:esbuild:production"
+            },
+            "development": {
+              "buildTarget": "gui-aggregator-service:esbuild:development"
+            }
+          },
+          "defaultConfiguration": "development"
+        },
+        "serve": {
+          "builder": "@angular-architects/native-federation:build",
+          "options": {
+            "target": "gui-aggregator-service:serve-original:development",
+            "rebuildDelay": 500,
+            "dev": true,
+            "devServer": true,
+            "port": 4200,
+            "federationConfigPath": "apps/gui-aggregator-service/federation.config.js"
+          }
+        }
+      }
+    },
+    "fault-management": {
+      "projectType": "application",
+      "schematics": {},
+      "root": "apps/fault-management",
+      "sourceRoot": "apps/fault-management/src",
+      "prefix": "app",
+      "architect": {
+        "esbuild": {
+          "builder": "@angular/build:application",
+          "options": {
+            "outputPath": "dist/fault-management",
+            "index": "apps/fault-management/src/index.html",
+            "browser": "apps/fault-management/src/main.ts",
+            "tsConfig": "apps/fault-management/tsconfig.app.json",
+            "assets": [],
+            "styles": [
+              "apps/fault-management/src/styles.css"
+            ],
+            "scripts": []
+          },
+          "configurations": {
+            "production": {
+              "optimization": true,
+              "extractLicenses": true,
+              "sourceMap": false
+            },
+            "development": {
+              "optimization": false,
+              "extractLicenses": false,
+              "sourceMap": true
+            }
+          },
+          "defaultConfiguration": "production"
+        },
+        "build": {
+          "builder": "@angular-architects/native-federation:build",
+          "options": {
+            "target": "fault-management:esbuild:production",
+            "rebuildDelay": 500,
+            "federationConfigPath": "apps/fault-management/federation.config.js"
+          },
+          "configurations": {
+            "production": {
+              "target": "fault-management:esbuild:production"
+            },
+            "development": {
+              "target": "fault-management:esbuild:development",
+              "dev": true
+            }
+          },
+          "defaultConfiguration": "production"
+        },
+        "serve-original": {
+          "builder": "@angular/build:dev-server",
+          "options": {
+            "port": 4201
+          },
+          "configurations": {
+            "production": {
+              "buildTarget": "fault-management:esbuild:production"
+            },
+            "development": {
+              "buildTarget": "fault-management:esbuild:development"
+            }
+          },
+          "defaultConfiguration": "development"
+        },
+        "serve": {
+          "builder": "@angular-architects/native-federation:build",
+          "options": {
+            "target": "fault-management:serve-original:development",
+            "rebuildDelay": 500,
+            "dev": true,
+            "devServer": true,
+            "port": 4201,
+            "federationConfigPath": "apps/fault-management/federation.config.js"
+          }
+        }
+      }
+    },
+    "topology-manager": {
+      "projectType": "application",
+      "schematics": {},
+      "root": "apps/topology-manager",
+      "sourceRoot": "apps/topology-manager/src",
+      "prefix": "app",
+      "architect": {
+        "esbuild": {
+          "builder": "@angular/build:application",
+          "options": {
+            "outputPath": "dist/topology-manager",
+            "index": "apps/topology-manager/src/index.html",
+            "browser": "apps/topology-manager/src/main.ts",
+            "tsConfig": "apps/topology-manager/tsconfig.app.json",
+            "assets": [],
+            "styles": [
+              "apps/topology-manager/src/styles.css"
+            ],
+            "scripts": []
+          },
+          "configurations": {
+            "production": {
+              "optimization": true,
+              "extractLicenses": true,
+              "sourceMap": false
+            },
+            "development": {
+              "optimization": false,
+              "extractLicenses": false,
+              "sourceMap": true
+            }
+          },
+          "defaultConfiguration": "production"
+        },
+        "build": {
+          "builder": "@angular-architects/native-federation:build",
+          "options": {
+            "target": "topology-manager:esbuild:production",
+            "rebuildDelay": 500,
+            "federationConfigPath": "apps/topology-manager/federation.config.js"
+          },
+          "configurations": {
+            "production": {
+              "target": "topology-manager:esbuild:production"
+            },
+            "development": {
+              "target": "topology-manager:esbuild:development",
+              "dev": true
+            }
+          },
+          "defaultConfiguration": "production"
+        },
+        "serve-original": {
+          "builder": "@angular/build:dev-server",
+          "options": {
+            "port": 4202
+          },
+          "configurations": {
+            "production": {
+              "buildTarget": "topology-manager:esbuild:production"
+            },
+            "development": {
+              "buildTarget": "topology-manager:esbuild:development"
+            }
+          },
+          "defaultConfiguration": "development"
+        },
+        "serve": {
+          "builder": "@angular-architects/native-federation:build",
+          "options": {
+            "target": "topology-manager:serve-original:development",
+            "rebuildDelay": 500,
+            "dev": true,
+            "devServer": true,
+            "port": 4202,
+            "federationConfigPath": "apps/topology-manager/federation.config.js"
+          }
+        }
+      }
+    },
+    "dashboard-widgets": {
+      "projectType": "application",
+      "schematics": {},
+      "root": "apps/dashboard-widgets",
+      "sourceRoot": "apps/dashboard-widgets/src",
+      "prefix": "app",
+      "architect": {
+        "esbuild": {
+          "builder": "@angular/build:application",
+          "options": {
+            "outputPath": "dist/dashboard-widgets",
+            "index": "apps/dashboard-widgets/src/index.html",
+            "browser": "apps/dashboard-widgets/src/main.ts",
+            "tsConfig": "apps/dashboard-widgets/tsconfig.app.json",
+            "assets": [],
+            "styles": [
+              "apps/dashboard-widgets/src/styles.css"
+            ],
+            "scripts": []
+          },
+          "configurations": {
+            "production": {
+              "optimization": true,
+              "extractLicenses": true,
+              "sourceMap": false
+            },
+            "development": {
+              "optimization": false,
+              "extractLicenses": false,
+              "sourceMap": true
+            }
+          },
+          "defaultConfiguration": "production"
+        },
+        "build": {
+          "builder": "@angular-architects/native-federation:build",
+          "options": {
+            "target": "dashboard-widgets:esbuild:production",
+            "rebuildDelay": 500,
+            "federationConfigPath": "apps/dashboard-widgets/federation.config.js"
+          },
+          "configurations": {
+            "production": {
+              "target": "dashboard-widgets:esbuild:production"
+            },
+            "development": {
+              "target": "dashboard-widgets:esbuild:development",
+              "dev": true
+            }
+          },
+          "defaultConfiguration": "production"
+        },
+        "serve-original": {
+          "builder": "@angular/build:dev-server",
+          "options": {
+            "port": 4203
+          },
+          "configurations": {
+            "production": {
+              "buildTarget": "dashboard-widgets:esbuild:production"
+            },
+            "development": {
+              "buildTarget": "dashboard-widgets:esbuild:development"
+            }
+          },
+          "defaultConfiguration": "development"
+        },
+        "serve": {
+          "builder": "@angular-architects/native-federation:build",
+          "options": {
+            "target": "dashboard-widgets:serve-original:development",
+            "rebuildDelay": 500,
+            "dev": true,
+            "devServer": true,
+            "port": 4203,
+            "federationConfigPath": "apps/dashboard-widgets/federation.config.js"
+          }
+        }
+      }
+    }
+  }
+}

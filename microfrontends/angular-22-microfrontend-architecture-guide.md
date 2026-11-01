@@ -220,3 +220,4 @@ ng build dashboard-widgets --configuration production
 ### 2. CDN & Gateway Hosting
 - Deploy each microfrontend's build artifacts (`dist/`) to independent S3 buckets or CDN edge paths (e.g. `/mfe/faults/`, `/mfe/topology/`).
 - Serve `federation.manifest.json` dynamically through an API Gateway to enable zero-downtime canary releases and instant traffic shifting.
+

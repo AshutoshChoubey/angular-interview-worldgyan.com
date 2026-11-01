@@ -4,7 +4,7 @@ module.exports = withNativeFederation({
   name: 'fault-management',
 
   exposes: {
-    './Module': './src/app/fault-management/fault-management.routes.ts'
+    './Module': './apps/fault-management/src/app/fault-management/fault-management.routes.ts'
   },
 
   shared: {

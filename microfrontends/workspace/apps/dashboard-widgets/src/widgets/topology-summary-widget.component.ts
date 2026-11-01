@@ -63,3 +63,4 @@ export class TopologySummaryWidgetComponent {
     this.nodeSelect.emit({ nodeId, ip, status });
   }
 }
+

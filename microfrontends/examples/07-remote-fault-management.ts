@@ -156,3 +156,4 @@ export const FAULT_MANAGEMENT_ROUTES: Routes = [
     component: FaultManagementRootComponent
   }
 ];
+

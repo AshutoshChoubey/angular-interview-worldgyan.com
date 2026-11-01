@@ -4,3 +4,4 @@ export interface UserSettings {
   theme: AppTheme;
   language: string;
 }
+

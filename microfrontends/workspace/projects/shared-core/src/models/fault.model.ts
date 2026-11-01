@@ -6,3 +6,4 @@ export interface FaultAlarm {
   timestamp: string;
   ack: boolean;
 }
+

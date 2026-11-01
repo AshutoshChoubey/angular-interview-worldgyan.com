@@ -127,3 +127,4 @@ All examples are production-grade, fully annotated, and located in the [`example
 > 1. Use **Federation Manifests** (`federation.manifest.json`) fetched at runtime from an API Gateway or CDN rather than hardcoded URLs.
 > 2. Implement semantic versioning checks (`requiredVersion`) in federation configs.
 > 3. Provide fallback component boundaries via Angular router error catch blocks that display graceful offline/maintenance cards if a remote CDN endpoint fails to resolve.
+

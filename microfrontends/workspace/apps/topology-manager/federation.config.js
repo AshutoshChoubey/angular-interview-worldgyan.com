@@ -4,7 +4,7 @@ module.exports = withNativeFederation({
   name: 'topology-manager',
 
   exposes: {
-    './Module': './src/app/topology-manager/topology-manager.routes.ts'
+    './Module': './apps/topology-manager/src/app/topology-manager/topology-manager.routes.ts'
   },
 
   shared: {

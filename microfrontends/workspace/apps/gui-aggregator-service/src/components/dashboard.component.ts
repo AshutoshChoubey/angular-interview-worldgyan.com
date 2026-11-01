@@ -78,3 +78,4 @@ export class DashboardComponent implements OnInit {
     this.telemetryMessage.set(`[<topology-summary-widget>] Node Selected: ${detail.nodeId} (${detail.ip}) -> ${detail.status}`);
   }
 }
+

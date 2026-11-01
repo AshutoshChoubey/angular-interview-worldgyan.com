@@ -42,3 +42,4 @@ body {
   line-height: 1.5;
   transition: background-color var(--transition-speed) ease, color var(--transition-speed) ease;
 }
+

@@ -4,7 +4,7 @@ module.exports = withNativeFederation({
   name: 'dashboard-widgets',
 
   exposes: {
-    './Widgets': './src/elements.ts'
+    './Widgets': './apps/dashboard-widgets/src/elements.ts'
   },
 
   shared: {

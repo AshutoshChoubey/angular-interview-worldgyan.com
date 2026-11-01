@@ -12,3 +12,4 @@ export const authGuard: CanActivateFn = (_route, _state) => {
 
   return router.parseUrl('/dashboard?authRequired=true');
 };
+

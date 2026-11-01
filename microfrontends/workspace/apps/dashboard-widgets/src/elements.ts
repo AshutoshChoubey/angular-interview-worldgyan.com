@@ -24,3 +24,4 @@ export async function bootstrapWebComponents(): Promise<void> {
 }
 
 bootstrapWebComponents().catch(err => console.error(err));
+
