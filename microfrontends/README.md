@@ -76,6 +76,47 @@ Welcome to the **Angular 22 Microfrontends Architecture Guide**, part of the **W
 
 ---
 
+## 🔄 Bidirectional Cross-Microfrontend Data Passing Architecture
+
+```
+                    +------------------------------------+
+                    |        Host Shell (Parent)         |
+                    |   gui-aggregator-service (4200)    |
+                    +------------------------------------+
+                        |                          ^
+     1. Parent ➜ Child  |                          | 2. Child ➜ Parent
+     (Attributes/Props) |                          | (CustomEvents / outputs)
+                        v                          |
+       +-----------------------+            +-------------------------+
+       |   Child Widget MFE 1  |            |   Child Widget MFE 2    |
+       |  <fm-status-widget>   |            |<topology-summary-widget>|
+       +-----------------------+            +-------------------------+
+                   ^                                    ^
+                   |                                    |
+                   +------ 3. Adjacent Sibling ⟷ Sibling +
+                             (@shared/core TelemetryBus)
+```
+
+### The 3 Core Communication Vectors:
+
+1. **Parent ➜ Child (Top-Down Data Flow):**
+   - Host Shell uses reactive attributes: `[attr.theme]="theme()"`, `[attr.selected-entity]="injectedEntity()"`, `[attr.cluster-id]="targetCluster()"`.
+   - Child components declare signal inputs (`input()`) that automatically react to parent updates.
+
+2. **Child ➜ Parent (Bottom-Up Event Bubbling):**
+   - Child components declare signal outputs (`output()`).
+   - When converted to Angular Elements (`createCustomElement`), these outputs are automatically dispatched as standard DOM `CustomEvent` objects (`alertClick`, `nodeSelect`).
+   - The Host Shell template captures them via standard Angular event bindings: `(alertClick)="onAlertReceived($event)"`.
+
+3. **Adjacent Sibling ⟷ Sibling (Cross-Microfrontend Peer Sync):**
+   - Implemented via `@shared/core`'s **`TelemetryBusService`**, a strict Native Federation singleton (`singleton: true`).
+   - When an operator clicks an alarm for `core-router-01` in the Fault Widget:
+     - Sibling 1 updates `telemetryBus.activeEntity.set('core-router-01.us-east')`.
+     - Sibling 2 (Topology Widget) reads `telemetryBus.activeEntity()` reactively ($O(1)$) and displays an alert badge over the affected node!
+   - In routed remotes, siblings also cross-navigate using Angular Router `queryParams` (e.g. `/topology?clusterId=cluster-core-east&entity=core-router-01.us-east`).
+
+---
+
 ## 💻 Annotated Code Examples
 
 All examples are production-grade, fully annotated, and located in the [`examples/`](examples/) directory:
@@ -91,6 +132,7 @@ All examples are production-grade, fully annotated, and located in the [`example
 9. [`examples/09-angular-elements-widgets.ts`](examples/09-angular-elements-widgets.ts) — Standalone Angular 22 components converted into native browser Custom Elements via `createCustomElement`.
 10. [`examples/10-mock-backend-server.ts`](examples/10-mock-backend-server.ts) — Express mock backend with multi-origin CORS, JWT token generation, fault filtering, and settings sync.
 11. [`examples/11-workspace-package.json`](examples/11-workspace-package.json) — Complete workspace dependency manifest using latest Angular 22+, Native Federation, and TypeScript.
+12. [`examples/12-cross-mfe-communication-patterns.ts`](examples/12-cross-mfe-communication-patterns.ts) — Full implementation of Parent-to-Child, Child-to-Parent, and Adjacent Sibling-to-Sibling communication patterns.
 
 ---
 

@@ -132,6 +132,7 @@ Enterprise distributed frontend architecture using Angular 22+ Standalone, Nativ
   - [`microfrontends/examples/09-angular-elements-widgets.ts`](microfrontends/examples/09-angular-elements-widgets.ts) — Angular Elements Web Components registration via `createCustomElement`.
   - [`microfrontends/examples/10-mock-backend-server.ts`](microfrontends/examples/10-mock-backend-server.ts) — Express mock backend with JWT auth, multi-origin CORS, and settings sync.
   - [`microfrontends/examples/11-workspace-package.json`](microfrontends/examples/11-workspace-package.json) — Complete workspace dependency manifest (Angular 22+, Native Federation).
+  - [`microfrontends/examples/12-cross-mfe-communication-patterns.ts`](microfrontends/examples/12-cross-mfe-communication-patterns.ts) — Full implementation of Parent-to-Child, Child-to-Parent, and Adjacent Sibling-to-Sibling communication patterns.
 
 ---
 
