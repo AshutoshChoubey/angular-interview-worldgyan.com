@@ -27,7 +27,10 @@
             "styles": [
               "apps/gui-aggregator-service/src/styles.css"
             ],
-            "scripts": []
+            "scripts": [],
+            "polyfills": [
+              "es-module-shims"
+            ]
           },
           "configurations": {
             "production": {
@@ -107,7 +110,10 @@
             "styles": [
               "apps/fault-management/src/styles.css"
             ],
-            "scripts": []
+            "scripts": [],
+            "polyfills": [
+              "es-module-shims"
+            ]
           },
           "configurations": {
             "production": {
@@ -187,7 +193,10 @@
             "styles": [
               "apps/topology-manager/src/styles.css"
             ],
-            "scripts": []
+            "scripts": [],
+            "polyfills": [
+              "es-module-shims"
+            ]
           },
           "configurations": {
             "production": {
@@ -267,7 +276,10 @@
             "styles": [
               "apps/dashboard-widgets/src/styles.css"
             ],
-            "scripts": []
+            "scripts": [],
+            "polyfills": [
+              "es-module-shims"
+            ]
           },
           "configurations": {
             "production": {
