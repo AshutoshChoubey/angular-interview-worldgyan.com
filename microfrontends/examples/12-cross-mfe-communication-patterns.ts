@@ -205,3 +205,4 @@ export class HostShellOrchestratorComponent {
     this.lastChildEvent.set(`Captured from Child: ${detail.alarmId} on ${detail.entity}`);
   }
 }
+

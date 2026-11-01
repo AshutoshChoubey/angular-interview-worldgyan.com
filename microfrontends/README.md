@@ -12,9 +12,9 @@ Welcome to the **Angular 22 Microfrontends Architecture Guide**, part of the **W
                                   |  JWT Auth | Faults | Topology | Settings     |
                                   +---------------------------------------------+
                                                          |
-                                      +------------------+------------------+
-                                      |                  |                  |
-                                      v                  v                  v
+                                       +------------------+------------------+
+                                       |                  |                  |
+                                       v                  v                  v
                      +---------------------------------+ |                  |
                      | Host Shell: gui-aggregator-service| |                  |
                      | (Port 4200 - Standalone Angular)| |                  |
@@ -23,21 +23,21 @@ Welcome to the **Angular 22 Microfrontends Architecture Guide**, part of the **W
                      | • Dynamic Remote Route Loader   | |                  |
                      | • Native Federation Manifest    | |                  |
                      +---------------------------------+ |                  |
-                                      |                  |                  |
-          +---------------------------+----------------+ |                  |
-          |                           |                | |                  |
-          v (Shared Singleton Engine) v                | |                  |
+                                       |                  |                  |
+           +---------------------------+----------------+ |                  |
+           |                           |                | |                  |
+           v (Shared Singleton Engine) v                | |                  |
 +---------------------+     +------------------------+ | |                  |
 | @shared/core        |     | Assets / Manifest      | | |                  |
 | • AuthService       |<----+federation.manifest.json| | |                  |
 | • SettingsService   |     +------------------------+ | |                  |
-| • Common Telemetry  |                                | |                  |
+| • TelemetryBus      |                                | |                  |
 +---------------------+                                | |                  |
-          ^                           ^                | |                  |
-          |                           |                | |                  |
-          +-----------------------+   +------------+   | |                  |
-          |                       |                |   | |                  |
-          v                       v                v   v v                  v
+           ^                           ^                | |                  |
+           |                           |                | |                  |
+           +-----------------------+   +------------+   | |                  |
+           |                       |                |   | |                  |
+           v                       v                v   v v                  v
 +---------------------+ +--------------------+ +------------------------------------+
 | Remote MFE 1        | | Remote MFE 2       | | Remote Web Component Producer      |
 | fault-management    | | topology-manager   | | dashboard-widgets (Port 4203)      |
@@ -50,15 +50,69 @@ Welcome to the **Angular 22 Microfrontends Architecture Guide**, part of the **W
 
 ---
 
+## 🔄 Bidirectional Cross-Microfrontend Data Passing Architecture
+
+```mermaid
+sequenceDiagram
+    autonumber
+    participant Shell as Host Shell (Port 4200)
+    participant FM as Fault Widget (Port 4203)
+    participant Topo as Topology Widget (Port 4203)
+    participant Bus as Shared TelemetryBus (@shared/core)
+    participant RemoteTopo as Topology Remote (Port 4202)
+
+    Note over Shell, Topo: Vector 1: Parent-to-Child (Top-Down Props)
+    Shell->>FM: [attr.selected-entity]="injectedEntity()"
+    Shell->>Topo: [attr.cluster-id]="targetCluster()"
+    FM-->>FM: computed() merges parent input with local signal
+
+    Note over FM, Shell: Vector 2: Child-to-Parent (Bottom-Up Events)
+    FM->>Shell: CustomEvent('alertClick', { detail: { alarmId, entity } })
+    Shell-->>Shell: onAlertReceived() updates parent telemetry deck
+
+    Note over FM, Topo: Vector 3: Adjacent Sibling-to-Sibling (Peer Sync)
+    FM->>Bus: broadcastEntityFocus('core-router-01.us-east', 'FM-Widget')
+    Bus-->>Topo: activeEntity() Signal updates synchronously
+    Topo-->>Topo: Render flashing alert badge on node-ce-01!
+
+    Note over FM, RemoteTopo: Vector 4: Cross-Remote Deep Linking
+    Shell->>RemoteTopo: navigate(['/topology'], { queryParams: { entity: 'core-router-01.us-east' } })
+    RemoteTopo-->>RemoteTopo: ActivatedRoute reads queryParams & triggers node inspection banner
+```
+
+### The 4 Core Communication Vectors:
+
+1. **Parent ➜ Child (Top-Down Attribute & Property Flow):**
+   - Host Shell uses reactive attributes: `[attr.theme]="theme()"`, `[attr.selected-entity]="injectedEntity()"`, `[attr.cluster-id]="targetCluster()"`.
+   - Child components declare signal inputs (`input({ alias: '...' })`) that automatically react to parent updates.
+
+2. **Child ➜ Parent (Bottom-Up Event Bubbling):**
+   - Child components declare signal outputs (`output()`).
+   - When compiled as Web Components via `@angular/elements`, these outputs automatically dispatch as native DOM `CustomEvent` instances (`alertClick`, `nodeSelect`).
+   - Host Shell listens via standard Angular event bindings: `(alertClick)="onAlertReceived($event)"`.
+
+3. **Adjacent Sibling ⟷ Sibling (Cross-Microfrontend Peer Sync):**
+   - Powered by `@shared/core`'s **`TelemetryBusService`**, anchored to `window.__MFE_GLOBAL_TELEMETRY__` to guarantee single-instance reactivity across disjoint Angular Element injectors.
+   - Clicking an alarm for `core-router-01` in `<fm-status-widget>` immediately triggers an active alert badge and pulse animation on `node-ce-01` inside `<topology-summary-widget>` with $O(1)$ signal reactivity.
+
+4. **Cross-Remote Deep Linking (Routed Microfrontend Transitions):**
+   - When navigating from `/fault-management` to `/topology`, the router passes deep-link query parameters (`?entity=...&clusterId=...&alarmId=...`).
+   - The destination remote reads parameters via `toSignal(inject(ActivatedRoute).queryParamMap)` and renders a dedicated alarm investigation banner.
+
+---
+
 ## ⚡ Core Microfrontend Tenets in Modern Angular 22
 
 1. **Native Federation (No Webpack Dependency):**
    Angular 22 uses the modern `@angular/build:application` builder powered by **Vite and esbuild**. Native Federation relies on native browser ECMAScript Modules (ESM) and Import Maps, eliminating Webpack lock-in while providing identical sharing and dynamic loading capabilities.
 
-2. **Strict Singleton Sharing (`@shared/core`):**
+2. **The `es-module-shims` Invariant:**
+   Native Federation uses `<script type="module-shim">` to polyfill dynamic import maps across all browser runtimes. Explicitly declaring `"polyfills": ["es-module-shims"]` in `angular.json` prevents blank screen execution failures.
+
+3. **Strict Singleton Sharing (`@shared/core`):**
    By configuring `singleton: true` and `strictVersion: true` in `federation.config.js`, Angular Core and the shared library (`@shared/core`) share the identical runtime JavaScript instance. Changes made to `theme()` or `user()` signals in the Host Shell update remote MFEs instantaneously with zero prop-drilling or polling.
 
-3. **Hybrid Composition: Routed Remotes + Web Components:**
+4. **Hybrid Composition: Routed Remotes + Web Components:**
    - **Routed Remotes:** Full feature modules (`/fault-management`, `/topology`) loaded dynamically via `loadRemoteModule()` behind an Angular `CanActivateFn` functional security guard.
    - **Angular Elements Web Components:** Autonomous, framework-agnostic dashboard widgets (`<fm-status-widget>`, `<topology-summary-widget>`) rendered side-by-side on the host dashboard with typed inputs (`theme`, `severityFilter`) and native DOM CustomEvents (`alertClick`, `nodeSelect`).
 
@@ -73,47 +127,6 @@ Welcome to the **Angular 22 Microfrontends Architecture Guide**, part of the **W
 | **`topology-manager`** | `4202` | Routed Remote MFE | `./Module` (Routes) | `@angular/*`, `@shared/core` (Singleton) |
 | **`dashboard-widgets`** | `4203` | Angular Elements Producer | `./Widgets` (Custom Elements) | `@angular/elements`, `@shared/core` |
 | **`backend-mock`** | `3000` | Node.js Express REST | API Endpoints | JWT, Multi-Origin CORS (4200–4203) |
-
----
-
-## 🔄 Bidirectional Cross-Microfrontend Data Passing Architecture
-
-```
-                    +------------------------------------+
-                    |        Host Shell (Parent)         |
-                    |   gui-aggregator-service (4200)    |
-                    +------------------------------------+
-                        |                          ^
-     1. Parent ➜ Child  |                          | 2. Child ➜ Parent
-     (Attributes/Props) |                          | (CustomEvents / outputs)
-                        v                          |
-       +-----------------------+            +-------------------------+
-       |   Child Widget MFE 1  |            |   Child Widget MFE 2    |
-       |  <fm-status-widget>   |            |<topology-summary-widget>|
-       +-----------------------+            +-------------------------+
-                   ^                                    ^
-                   |                                    |
-                   +------ 3. Adjacent Sibling ⟷ Sibling +
-                             (@shared/core TelemetryBus)
-```
-
-### The 3 Core Communication Vectors:
-
-1. **Parent ➜ Child (Top-Down Data Flow):**
-   - Host Shell uses reactive attributes: `[attr.theme]="theme()"`, `[attr.selected-entity]="injectedEntity()"`, `[attr.cluster-id]="targetCluster()"`.
-   - Child components declare signal inputs (`input()`) that automatically react to parent updates.
-
-2. **Child ➜ Parent (Bottom-Up Event Bubbling):**
-   - Child components declare signal outputs (`output()`).
-   - When converted to Angular Elements (`createCustomElement`), these outputs are automatically dispatched as standard DOM `CustomEvent` objects (`alertClick`, `nodeSelect`).
-   - The Host Shell template captures them via standard Angular event bindings: `(alertClick)="onAlertReceived($event)"`.
-
-3. **Adjacent Sibling ⟷ Sibling (Cross-Microfrontend Peer Sync):**
-   - Implemented via `@shared/core`'s **`TelemetryBusService`**, a strict Native Federation singleton (`singleton: true`).
-   - When an operator clicks an alarm for `core-router-01` in the Fault Widget:
-     - Sibling 1 updates `telemetryBus.activeEntity.set('core-router-01.us-east')`.
-     - Sibling 2 (Topology Widget) reads `telemetryBus.activeEntity()` reactively ($O(1)$) and displays an alert badge over the affected node!
-   - In routed remotes, siblings also cross-navigate using Angular Router `queryParams` (e.g. `/topology?clusterId=cluster-core-east&entity=core-router-01.us-east`).
 
 ---
 
@@ -132,7 +145,7 @@ All examples are production-grade, fully annotated, and located in the [`example
 9. [`examples/09-angular-elements-widgets.ts`](examples/09-angular-elements-widgets.ts) — Standalone Angular 22 components converted into native browser Custom Elements via `createCustomElement`.
 10. [`examples/10-mock-backend-server.ts`](examples/10-mock-backend-server.ts) — Express mock backend with multi-origin CORS, JWT token generation, fault filtering, and settings sync.
 11. [`examples/11-workspace-package.json`](examples/11-workspace-package.json) — Complete workspace dependency manifest using latest Angular 22+, Native Federation, and TypeScript.
-12. [`examples/12-cross-mfe-communication-patterns.ts`](examples/12-cross-mfe-communication-patterns.ts) — Full implementation of Parent-to-Child, Child-to-Parent, and Adjacent Sibling-to-Sibling communication patterns.
+12. [`examples/12-cross-mfe-communication-patterns.ts`](examples/12-cross-mfe-communication-patterns.ts) — Full implementation of Parent-to-Child, Child-to-Parent, Adjacent Sibling-to-Sibling, and Cross-Remote Deep Linking communication patterns.
 
 ---
 
@@ -146,6 +159,7 @@ All examples are production-grade, fully annotated, and located in the [`example
 | **Singleton Guarantee** | Configured in Webpack plugins | Configured in `federation.config.js` | Must share Injector or register once |
 | **Memory Footprint** | Moderate (Webpack runtime overhead) | Minimal (native browser imports) | Lightweight per component element |
 | **Communication Strategy** | Shared service, window events, NgRx | `@shared/core` singleton signals, Event Bus | Standard DOM `[attributes]` & `CustomEvent` |
+| **Polyfill Requirement** | Webpack runtime scripts | `es-module-shims` for module-shims | `custom-elements-es5-adapter` (legacy only) |
 | **Best Production Use Case** | Legacy Webpack monorepos | Modern high-performance routed enterprise MFEs | Multi-framework embedded widgets, CMS slots |
 
 ---
@@ -158,15 +172,11 @@ All examples are production-grade, fully annotated, and located in the [`example
 ### Q2: How do you prevent the "Multiple Angular Instances" pitfall when sharing state via `@shared/core`?
 > **Answer:** In `federation.config.js`, dependencies must specify `{ singleton: true, strictVersion: true }`. When the Host Shell bootstraps, Native Federation registers the shared library in an internal package map. When a remote MFE requests `@shared/core` or `@angular/core`, the runtime intercepts the fetch and serves the already loaded host module instance rather than initiating a duplicate HTTP request.
 
-### Q3: How do you achieve cross-MFE theme synchronization without leaking styles?
+### Q3: Why is `es-module-shims` required when running Native Federation with modern Angular?
+> **Answer:** Native Federation outputs scripts with `type="module-shim"` so it can dynamically resolve remote packages defined in runtime Import Maps (`assets/federation.manifest.json`). Standard browser engines natively ignore unrecognized script types like `type="module-shim"`. By including `es-module-shims` in the `polyfills` array in `angular.json`, the browser loads the polyfill first, intercepting and resolving all dynamic module-shim requests smoothly without rendering blank pages.
+
+### Q4: How do you achieve cross-MFE theme synchronization without leaking styles?
 > **Answer:** We decouple design tokens into CSS Custom Properties (e.g. `--bg-surface`, `--text-primary`) defined at the `:root` level and controlled by an attribute (`[data-theme='dark']`). The shared `SettingsService` updates `document.documentElement.setAttribute('data-theme', theme)`. Because CSS variables penetrate Shadow DOM boundaries and inherited light DOMs, both routed remote microfrontends and Angular Elements web components adapt instantly without re-rendering or component reflows.
 
-### Q4: How does dynamic remote loading interact with Angular's Zoneless Change Detection?
-> **Answer:** When using `provideZonelessChangeDetection()`, Angular does not rely on `zone.js` patching browser tasks. When remote routes load via `loadRemoteModule()`, their components trigger change detection purely through reactive signals (`signal()`, `computed()`) or input notifications. This reduces remote chunk sizes by eliminating bundled Zone polyfills.
-
-### Q5: What is the recommended strategy for handling microfrontend version skew in production?
-> **Answer:** 
-> 1. Use **Federation Manifests** (`federation.manifest.json`) fetched at runtime from an API Gateway or CDN rather than hardcoded URLs.
-> 2. Implement semantic versioning checks (`requiredVersion`) in federation configs.
-> 3. Provide fallback component boundaries via Angular router error catch blocks that display graceful offline/maintenance cards if a remote CDN endpoint fails to resolve.
-
+### Q5: How do disjoint injectors in Angular Elements share Signal state with the Host Shell?
+> **Answer:** Angular Elements instantiated via `createApplication({ providers: [...] })` construct their own independent root injector. To achieve reactive synchronization across both the Shell and Custom Element injectors, we anchor the reactive Signal store to a global token (`window.__MFE_GLOBAL_TELEMETRY__`). Both injector trees resolve the exact same `WritableSignal` instances in memory, allowing `.set()` or `.update()` calls from either side to notify consumers instantly without polling or manual event listeners.

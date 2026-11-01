@@ -212,6 +212,7 @@ Enterprise distributed frontend architecture using Angular 22+ Standalone, Nativ
 | **Singleton Guarantee** | Configured in Webpack plugins | Configured in `federation.config.js` | Must share Injector or register once |
 | **Memory Footprint** | Moderate (Webpack runtime overhead) | Minimal (native browser imports) | Lightweight per component element |
 | **Communication Strategy** | Shared service, window events, NgRx | `@shared/core` singleton signals, Event Bus | Standard DOM `[attributes]` & `CustomEvent` |
+| **Polyfill Requirement** | Webpack runtime scripts | `es-module-shims` for module-shims | `custom-elements-es5-adapter` (legacy only) |
 | **Best Production Use Case** | Legacy Webpack monorepos | Modern high-performance routed enterprise MFEs | Multi-framework embedded widgets, CMS slots |
 
 ---
