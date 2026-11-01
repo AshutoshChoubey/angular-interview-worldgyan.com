@@ -1,0 +1,8 @@
+{
+  "name": "dashboard-widgets",
+  "version": "1.0.0",
+  "scripts": {
+    "start": "ng serve --port 4203",
+    "build": "ng build"
+  }
+}

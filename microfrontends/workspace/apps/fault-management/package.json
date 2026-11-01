@@ -1,0 +1,8 @@
+{
+  "name": "fault-management",
+  "version": "1.0.0",
+  "scripts": {
+    "start": "ng serve --port 4201",
+    "build": "ng build"
+  }
+}

@@ -116,6 +116,25 @@ Deterministic unidirectional data flow, strongly typed action creators (`createA
 
 ---
 
+### 8. 🧩 [Microfrontends Architecture (`microfrontends/`)](microfrontends/README.md)
+Enterprise distributed frontend architecture using Angular 22+ Standalone, Native Federation (`@angular-architects/native-federation`), Angular Elements (Web Components), strict singleton state management (`@shared/core` with Signals), functional security guards, and Node.js Express telemetry backend.
+
+- 📖 **Study Guide**: [`microfrontends/README.md`](microfrontends/README.md) (or [`microfrontends/angular-22-microfrontend-architecture-guide.md`](microfrontends/angular-22-microfrontend-architecture-guide.md))
+- 💻 **Practical Examples**:
+  - [`microfrontends/examples/01-shared-core-auth-service.ts`](microfrontends/examples/01-shared-core-auth-service.ts) — Signal-based singleton authentication & RBAC service.
+  - [`microfrontends/examples/02-shared-core-settings-service.ts`](microfrontends/examples/02-shared-core-settings-service.ts) — UI preferences engine with DOM root attribute sync (`data-theme`) & CustomEvents.
+  - [`microfrontends/examples/03-shell-federation-config.js`](microfrontends/examples/03-shell-federation-config.js) — Native Federation host config with strict singletons.
+  - [`microfrontends/examples/04-shell-dynamic-routes.ts`](microfrontends/examples/04-shell-dynamic-routes.ts) — `loadRemoteModule()` routing behind functional `authGuard` and JWT `authInterceptor`.
+  - [`microfrontends/examples/05-shell-header-component.ts`](microfrontends/examples/05-shell-header-component.ts) — Host shell navigation bar with Settings Gear dropdown and Auth profile badge.
+  - [`microfrontends/examples/06-shell-dashboard-component.ts`](microfrontends/examples/06-shell-dashboard-component.ts) — Host dashboard embedding `<fm-status-widget>` and `<topology-summary-widget>`.
+  - [`microfrontends/examples/07-remote-fault-management.ts`](microfrontends/examples/07-remote-fault-management.ts) — Routed Remote MFE 1 (`fault-management`) consuming `@shared/core`.
+  - [`microfrontends/examples/08-remote-topology-manager.ts`](microfrontends/examples/08-remote-topology-manager.ts) — Routed Remote MFE 2 (`topology-manager`) visualizing mesh clusters and nodes.
+  - [`microfrontends/examples/09-angular-elements-widgets.ts`](microfrontends/examples/09-angular-elements-widgets.ts) — Angular Elements Web Components registration via `createCustomElement`.
+  - [`microfrontends/examples/10-mock-backend-server.ts`](microfrontends/examples/10-mock-backend-server.ts) — Express mock backend with JWT auth, multi-origin CORS, and settings sync.
+  - [`microfrontends/examples/11-workspace-package.json`](microfrontends/examples/11-workspace-package.json) — Complete workspace dependency manifest (Angular 22+, Native Federation).
+
+---
+
 ## ⚡ Quick Cheat Sheet: Forms Architecture (Angular 22)
 
 | Architecture Concern | Template-Driven Forms | Strictly Typed Reactive Forms | Signal Forms (Modern Angular 22) |
@@ -182,6 +201,20 @@ Deterministic unidirectional data flow, strongly typed action creators (`createA
 
 ---
 
+## ⚡ Quick Cheat Sheet: Microfrontends Architecture (Angular 22)
+
+| Concern / Capability | Webpack Module Federation | Native Federation (`@angular-architects`) | Angular Elements (Web Components) |
+| :--- | :--- | :--- | :--- |
+| **Bundler Requirement** | Webpack 5 strictly | **Bundler-Agnostic** (esbuild, Vite, Rollup) | Any bundler / Standalone compile |
+| **Underlying Mechanism** | Webpack Runtime Global (`window.webpackChunk...`) | **Native Browser ESM & Import Maps** | Native W3C Custom Elements Registry |
+| **Angular Version Fit** | Angular 12 – 16 (Webpack) | **Angular 17 – 22+ (Modern Application Builder)** | All Angular Versions |
+| **Singleton Guarantee** | Configured in Webpack plugins | Configured in `federation.config.js` | Must share Injector or register once |
+| **Memory Footprint** | Moderate (Webpack runtime overhead) | Minimal (native browser imports) | Lightweight per component element |
+| **Communication Strategy** | Shared service, window events, NgRx | `@shared/core` singleton signals, Event Bus | Standard DOM `[attributes]` & `CustomEvent` |
+| **Best Production Use Case** | Legacy Webpack monorepos | Modern high-performance routed enterprise MFEs | Multi-framework embedded widgets, CMS slots |
+
+---
+
 ## 🎯 Key Differences: Signals vs Observables
 
 | Property | Signals | Observables (RxJS) |
@@ -203,5 +236,6 @@ Deterministic unidirectional data flow, strongly typed action creators (`createA
 - [x] 💉 **Dependency Injection** (`dependency-injection/` - `inject()`, hierarchical injectors, 8 service types, viewProviders)
 - [x] 📝 **Forms Architecture** (`forms/` - Template-Driven, Typed Reactive, Signal Forms, FormArray, CVA, linkedSignal)
 - [x] 🏪 **NgRx State Management** (`ngrx/` - createAction, createReducer, effects, ofType, switchMap, selectSignal)
+- [x] 🧩 **Microfrontends Architecture** (`microfrontends/` - Native Federation, Web Components, Dynamic Remotes, Shared Signals)
 - [ ] 🔀 **Modern Control Flow** (`control-flow/` - `@if`, `@for`, `@defer`)
 - [ ] 🌐 **SSR & Hydration** (`ssr-hydration/` - Event replay, incremental hydration)

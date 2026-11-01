@@ -1,0 +1,8 @@
+{
+  "name": "topology-manager",
+  "version": "1.0.0",
+  "scripts": {
+    "start": "ng serve --port 4202",
+    "build": "ng build"
+  }
+}
